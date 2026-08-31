@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="google" value="notranslate">
+<title>Whistle</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="side-head">
+      <button class="icon-btn" id="btn-sidebar" data-icon="sidebar" title="Hide sidebar (⌘\)"></button>
+    </div>
+    <div class="side-scroll">
+        <div class="side-group">
+          <div class="side-title">Favorites</div>
+          <nav class="side-nav" id="fav-nav">
+            <a data-scope="pinned"><span class="icn" data-icon="pin"></span><span class="nav-label">Pinned</span><span class="side-count" id="pinned-count">0</span></a>
+            <a data-scope="saved"><span class="icn" data-icon="save"></span><span class="nav-label">Saved</span><span class="side-count" id="saved-count">0</span></a>
+          </nav>
+        </div>
+
+        <div class="side-group side-grow">
+          <div class="side-title">All</div>
+          <nav class="side-nav">
+            <a data-scope="all" id="scope-all" class="active"><span class="icn" data-icon="network"></span><span class="nav-label">All Traffic</span><span class="side-count" id="all-count">0</span></a>
+          </nav>
+          <div class="tree" id="side-tree"></div>
+        </div>
+
+        <div class="side-group side-collapsible collapsed" data-side-section="tools">
+          <button class="side-title side-section-toggle" type="button" aria-expanded="false">
+            <span>Tools</span><svg class="side-caret" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5"/></svg>
+          </button>
+          <nav class="side-nav" id="tool-nav">
+            <a data-tool="map-local"><span class="icn" data-icon="mapLocal"></span><span class="nav-label">Map Local</span></a>
+            <a data-tool="map-remote"><span class="icn" data-icon="mapRemote"></span><span class="nav-label">Map Remote</span></a>
+            <a data-tool="throttle"><span class="icn" data-icon="throttle"></span><span class="nav-label">Throttle</span></a>
+            <a data-tool="block"><span class="icn" data-icon="block"></span><span class="nav-label">Block List</span></a>
+            <a data-tool="ssl"><span class="icn" data-icon="ssl"></span><span class="nav-label">SSL Proxying</span></a>
+            <a data-tool="breakpoint"><span class="icn" data-icon="breakpoint"></span><span class="nav-label">Breakpoints</span></a>
+          </nav>
+        </div>
+
+        <div class="side-group side-collapsible collapsed" data-side-section="workspace">
+          <button class="side-title side-section-toggle" type="button" aria-expanded="false">
+            <span>Workspace</span><svg class="side-caret" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5"/></svg>
+          </button>
+          <nav class="side-nav" id="page-nav">
+            <a data-page="network" class="active"><span class="icn" data-icon="network"></span><span class="nav-label">Network</span></a>
+            <a data-page="rules"><span class="icn" data-icon="rules"></span><span class="nav-label">Rules</span></a>
+            <a data-page="values"><span class="icn" data-icon="values"></span><span class="nav-label">Values</span></a>
+            <a data-page="plugins"><span class="icn" data-icon="plugins"></span><span class="nav-label">Plugins</span></a>
+            <a data-page="classic"><span class="icn" data-icon="classic"></span><span class="nav-label">Classic UI</span></a>
+          </nav>
+        </div>
+      </div>
+
+    <div class="side-foot">
+      <button class="icon-btn" id="side-add" data-icon="plus" title="New filter"></button>
+      <div class="side-filter">
+        <span class="icn" data-icon="filter"></span>
+        <input id="side-filter-input" placeholder="Filter (⇧⌘F)" spellcheck="false">
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-resizer" id="sidebar-resizer" title="Resize sidebar"></div>
+
+  <div class="content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="icon-btn peek-only" id="btn-sidebar-show" data-icon="sidebar" title="Show sidebar (⌘\)"></button>
+        <button class="icon-btn" id="btn-record" data-icon="record" title="Pause recording (⌘R)"></button>
+        <button class="icon-btn" id="btn-compose" data-icon="compose" title="Compose request"></button>
+        <button class="icon-btn" id="btn-clear" data-icon="clear" title="Clear (⌘K)"></button>
+      </div>
+      <div class="topbar-center">
+        <div class="listen-pill" id="listen-pill">
+          <span class="listen-dot"></span>
+          <span id="listen-text">Starting…</span>
+          <span class="listen-sep">|</span>
+          <button class="listen-action" id="listen-action">Pause</button>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="icon-btn" id="btn-replay" data-icon="replay" title="Replay selected"></button>
+        <button class="icon-btn" id="btn-export" data-icon="export" title="Export sessions"></button>
+        <button class="icon-btn" id="btn-import" data-icon="import" title="Import sessions"></button>
+        <input type="file" id="import-file" accept=".txt,.json,.har" hidden>
+        <span class="sep"></span>
+        <button class="icon-btn on" id="dock-bottom" data-icon="layoutH" title="Inspector at the bottom"></button>
+        <button class="icon-btn" id="dock-right" data-icon="layoutV" title="Inspector on the right"></button>
+        <button class="icon-btn" id="btn-theme" data-icon="theme" title="Toggle appearance"></button>
+        <button class="online-btn" id="btn-online" title="Server status and online addresses">
+          <span class="icn" data-icon="online"></span><span class="online-label">Online</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-bar" id="filter-bar">
+      <div class="filter-rows" id="filter-rows"></div>
+      <div class="filter-foot">
+        <select class="filter-select mode-select" id="filter-mode">
+          <option value="AND">AND all filters</option>
+          <option value="OR">OR all filters</option>
+        </select>
+        <div class="filter-hints">
+          <span>Show: <b>⌘F</b></span>
+          <span>New: <b>⌘N</b></span>
+          <span>Remove: <b>⇧⌘N</b></span>
+          <span>Up: <b>⌘↑</b></span>
+          <span>Down: <b>⌘↓</b></span>
+          <span>On/Off: <b>⌘B</b></span>
+          <span>Hide: <b>ESC</b></span>
+        </div>
+        <button class="link-btn" id="filter-clear">Clear all</button>
+        <button class="btn" id="filter-save">Save</button>
+      </div>
+    </div>
+
+    <main class="main" id="main">
+      <section class="page" id="page-network">
+        <div class="chips" id="type-chips"></div>
+        <div class="work" id="work">
+          <div class="list-wrap">
+            <div class="list-head" id="list-head"></div>
+            <div class="list-scroll" id="list-scroll"><div class="list-sizer" id="list-sizer"></div><div class="list-rows" id="list-rows"></div></div>
+            <div class="list-empty" id="list-empty">No requests captured yet.</div>
+          </div>
+          <div class="hsplit" id="hsplit"></div>
+          <div class="detail" id="detail">
+            <div class="url-bar" id="url-bar"></div>
+            <div class="detail-body" id="detail-body"><div class="placeholder">Select a request</div></div>
+          </div>
+        </div>
+        <footer class="statusbar" id="statusbar">
+          <div class="status-left">
+            <button class="sbtn" id="sb-clear">Clear</button>
+            <button class="sbtn" id="sb-filter">Filter</button>
+            <button class="sbtn" id="sb-autoselect">Auto Select</button>
+          </div>
+          <div class="status-mid" id="sb-count">0/0 rows selected</div>
+          <div class="status-right">
+            <span class="sb-stat" id="sb-stat">· 0 B</span>
+            <button class="sbtn toggle" data-tool="block">Block List</button>
+            <button class="sbtn toggle" data-tool="map-local">Map Local</button>
+            <button class="sbtn toggle" data-tool="breakpoint">Breakpoint</button>
+            <button class="sbtn toggle" data-tool="ssl">SSL Proxying</button>
+            <span class="sb-chip" id="sb-proxy">Proxy</span>
+          </div>
+        </footer>
+      </section>
+      <section class="page hidden" id="page-rules"></section>
+      <section class="page hidden" id="page-values"></section>
+      <section class="page hidden" id="page-plugins"></section>
+      <section class="page hidden" id="page-classic"><iframe id="classic-frame" title="Classic UI"></iframe></section>
+    </main>
+  </div>
+</div>
+<div class="modal-root" id="modal-root"></div>
+<div class="toast" id="toast"></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

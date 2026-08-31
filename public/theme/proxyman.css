@@ -1,0 +1,684 @@
+/*
+ * Proxyman-style skin for the whistle web UI.
+ *
+ * Pure presentation: it only overrides whistle's own CSS custom properties and
+ * adds cosmetic rules on top of the classes whistle already renders, so every
+ * feature, DOM node and event handler of the original UI stays untouched.
+ * Injected by lib/theme.js and removable at runtime.
+ */
+
+/* ---------------------------------------------------------------- palette */
+:root {
+  --wt-accent: #2f6df6;
+  --wt-accent-hover: #1f57d6;
+  --wt-accent-soft: rgba(47, 109, 246, .12);
+  --wt-radius: 6px;
+  --wt-radius-lg: 10px;
+  --wt-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', Roboto, Helvetica, Arial, sans-serif;
+  --wt-mono: 'SF Mono', ui-monospace, Menlo, Consolas, 'Liberation Mono', monospace;
+
+  --c-default: #16181d;
+  --c-heavy: #1d1f23;
+  --c-thin: #4a4f57;
+  --c-gray: #767c85;
+  --c-disabled: #a3a8b0;
+  --c-border: #e2e5ea;
+  --c-link: var(--wt-accent);
+  --c-link-hover: var(--wt-accent-hover);
+  --c-active: #fff;
+  --c-primary: var(--wt-accent);
+  --c-primary-hover: var(--wt-accent-hover);
+  --c-primary-active: #1a49b4;
+
+  --b-default: #fff;
+  --b-bar: #f6f7f9;
+  --b-title: #f1f3f6;
+  --b-heavy: #eceef2;
+  --b-heavy-active: #e3e6ec;
+  --b-hover: #f2f4f7;
+  --b-list-hover: #eef1f6;
+  --b-active: #e4e8ef;
+  --b-gray: #dfe2e8;
+  --b-btn-hover: #eceef2;
+  --b-btn-active: var(--wt-accent-soft);
+  --b-disabled: #f4f5f7;
+  --b-prop: #eef0f4;
+  --b-primary: var(--wt-accent);
+  --b-primary-hover: var(--wt-accent-hover);
+  --b-primary-active: #1a49b4;
+  --b-modal: rgba(17, 20, 26, .38);
+  --b-mark: var(--wt-accent);
+  --b-list-mark: var(--wt-accent);
+  --v-border: 1px solid var(--c-border);
+}
+
+html[data-theme='dark'] {
+  --wt-accent: #4c8dff;
+  --wt-accent-hover: #6ba1ff;
+  --wt-accent-soft: rgba(76, 141, 255, .18);
+
+  --c-default: #f2f4f7;
+  --c-heavy: #e6e9ee;
+  --c-thin: #c3c8d0;
+  --c-gray: #9096a0;
+  --c-disabled: #6b7079;
+  --c-border: #33373e;
+  --c-active: #fff;
+
+  --b-default: #1b1d21;
+  --b-bar: #212429;
+  --b-title: #24272d;
+  --b-heavy: #2a2e34;
+  --b-heavy-active: #31353c;
+  --b-hover: #26292f;
+  --b-list-hover: #2a2e35;
+  --b-active: #31353c;
+  --b-gray: #2f333a;
+  --b-btn-hover: #2c3038;
+  --b-btn-active: var(--wt-accent-soft);
+  --b-disabled: #26292f;
+  --b-prop: #262a30;
+  --b-modal: rgba(0, 0, 0, .6);
+}
+
+/* ------------------------------------------------------------- typography */
+body,
+html,
+.main,
+button,
+input,
+select,
+textarea,
+.form-control,
+.btn {
+  font-family: var(--wt-font);
+}
+
+body {
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+
+pre,
+.n-monospace,
+.CodeMirror,
+body .CodeMirror pre,
+.w-com-hex-text,
+.w-json-viewer-str {
+  font-family: var(--wt-mono);
+}
+
+/* --------------------------------------------------- main tabs (segments) */
+.nav-tabs.w-tabs {
+  border-bottom: var(--v-border);
+  background: var(--b-title);
+  padding: 6px 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.nav-tabs.w-tabs > li {
+  float: none;
+  margin: 0 0 -1px;
+}
+
+.nav-tabs.w-tabs > li > a {
+  border: 1px solid transparent !important;
+  border-radius: var(--wt-radius) var(--wt-radius) 0 0;
+  margin: 0;
+  padding: 5px 14px;
+  color: var(--c-gray);
+  font-weight: 500;
+  background: transparent;
+  transition: background-color .12s ease, color .12s ease;
+}
+
+.nav-tabs.w-tabs > li > a:hover {
+  background: var(--b-hover);
+  color: var(--c-default);
+}
+
+.nav-tabs.w-tabs > li.active > a,
+.nav-tabs.w-tabs > li.active > a:hover,
+.nav-tabs.w-tabs > li.active > a:focus {
+  background: var(--b-default);
+  color: var(--c-default);
+  border: var(--v-border) !important;
+  border-bottom-color: var(--b-default) !important;
+  box-shadow: inset 0 2px 0 0 var(--wt-accent);
+}
+
+/* -------------------------------------------------------- toolbar (w-menu) */
+.w-menu {
+  height: 36px;
+  background: var(--b-title);
+  border-bottom: var(--v-border);
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding-left: 4px;
+}
+
+.w-menu a {
+  height: 26px;
+  line-height: 26px;
+  padding: 0 9px;
+  border-radius: var(--wt-radius);
+  color: var(--c-thin);
+  transition: background-color .12s ease, color .12s ease;
+}
+
+.w-menu a:hover:not(.w-offline) {
+  background: var(--b-btn-hover);
+  color: var(--c-default);
+}
+
+.w-menu .w-menu-selected,
+.w-menu-selected {
+  background: var(--wt-accent-soft) !important;
+  color: var(--wt-accent) !important;
+}
+
+.w-menu .w-online {
+  top: 4px;
+  right: 6px;
+}
+
+.w-menu-item {
+  border-radius: var(--wt-radius);
+  border: var(--v-border);
+  padding: 4px 0;
+  box-shadow: 0 8px 24px rgba(15, 20, 30, .18);
+  overflow: hidden;
+}
+
+.w-menu-item a {
+  border-radius: 4px;
+  margin: 0 4px !important;
+  line-height: 24px;
+  height: 24px;
+}
+
+/* --------------------------------------------------------- request filter */
+.w-filter-input {
+  height: 32px;
+  border: var(--v-border);
+  border-radius: var(--wt-radius);
+  background: var(--b-default);
+  color: var(--c-default);
+  padding: 0 10px;
+  margin: 4px 6px;
+  width: calc(100% - 12px);
+  outline: 0;
+}
+
+html[data-theme='dark'] .w-filter-input {
+  background: var(--b-bar);
+  color: var(--c-default);
+}
+
+.w-filter-input:focus {
+  border-color: var(--wt-accent);
+  box-shadow: 0 0 0 3px var(--wt-accent-soft);
+}
+
+.w-filter-bar {
+  background: var(--b-bar);
+}
+
+/* ------------------------------------------- left rail (desktop app shell) */
+.w-left-menu {
+  width: 138px;
+  background: var(--b-bar);
+  border-right: var(--v-border);
+  padding: 8px 8px 0;
+}
+
+.w-left-menu:before {
+  content: 'Workspace';
+  display: block;
+  padding: 2px 10px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--c-gray);
+}
+
+.w-left-menu a {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: auto;
+  padding: 7px 10px;
+  margin-bottom: 2px;
+  text-align: left;
+  border-radius: var(--wt-radius);
+  color: var(--c-thin);
+  transition: background-color .12s ease, color .12s ease;
+}
+
+.w-left-menu a > span.glyphicon {
+  margin: 0;
+  font-size: 13px;
+  width: 16px;
+  text-align: center;
+  color: var(--c-gray);
+}
+
+.w-left-menu a .w-left-menu-name {
+  display: inline;
+  width: auto;
+  margin: 0;
+  transform: none;
+  zoom: normal;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.w-left-menu a:hover {
+  background: var(--b-btn-hover);
+  color: var(--c-default);
+}
+
+.w-left-menu a.w-menu-selected {
+  background: var(--wt-accent-soft) !important;
+  color: var(--wt-accent) !important;
+  font-weight: 600;
+}
+
+.w-left-menu a.w-menu-selected > span.glyphicon {
+  color: var(--wt-accent);
+}
+
+/* Labels are visible now, so the hover tooltip is redundant. */
+.w-left-menu a:hover .w-left-menu-tips {
+  display: none;
+}
+
+/* Unsaved marker moves to the trailing edge of the wide row. */
+.w-left-menu .w-menu-changed {
+  position: absolute;
+  top: 50%;
+  left: auto;
+  right: 8px;
+  margin-top: -9px;
+  font-size: 15px;
+}
+
+/* -------------------------------------- detail tabs (segmented btn group) */
+.w-tabs-sm {
+  background: var(--b-bar);
+  border-top: none;
+  border-bottom: var(--v-border);
+  padding: 4px 6px;
+}
+
+.w-tabs-sm .btn {
+  background: transparent;
+  border: none !important;
+  border-radius: var(--wt-radius);
+  color: var(--c-gray);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 10px;
+}
+
+.w-tabs-sm .btn:hover {
+  background: var(--b-btn-hover);
+  color: var(--c-default);
+}
+
+.w-tabs-sm .btn.active,
+.w-tabs-sm .btn.w-active,
+.w-tabs-sm .btn.w-tab-active {
+  background: var(--b-default) !important;
+  color: var(--wt-accent) !important;
+  box-shadow: 0 1px 2px rgba(15, 20, 30, .12);
+}
+
+.w-tabs-sm .btn.active .glyphicon,
+.w-tabs-sm .btn.w-active .glyphicon {
+  color: var(--wt-accent);
+}
+
+/* ------------------------------------------------- content-type filter bar */
+.w-type-bar {
+  background: var(--b-bar);
+  height: 30px;
+  padding: 4px 0;
+  border-top: var(--v-border);
+}
+
+.w-type-bar span {
+  border: none;
+  border-radius: 999px;
+  height: 20px;
+  padding: 0 10px;
+  background: var(--b-heavy);
+  color: var(--c-thin);
+  transition: background-color .12s ease, color .12s ease;
+}
+
+.w-type-bar span:hover {
+  background: var(--b-active);
+  color: var(--c-default);
+}
+
+.w-type-bar span.w-active {
+  background: var(--wt-accent) !important;
+  color: #fff !important;
+}
+
+/* ------------------------------------------------------ network list rows */
+.w-req-data-headers {
+  height: 30px;
+  border-bottom: var(--v-border);
+}
+
+.w-req-data-headers .table th {
+  background-color: var(--b-bar) !important;
+  color: var(--c-gray) !important;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  padding: 4px 0 4px 8px;
+}
+
+.w-req-data-headers .table th:hover {
+  background-color: var(--b-heavy) !important;
+  color: var(--c-default) !important;
+}
+
+.w-req-data-list :is(th, td) {
+  font-size: 12px;
+  line-height: 22px !important;
+  padding: 2px 0 2px 8px !important;
+}
+
+.w-req-data-list tr {
+  background: var(--b-default);
+}
+
+.w-req-data-list .w-hover-body tr:hover :is(th, td) {
+  background: var(--b-list-hover);
+}
+
+.w-req-data-list .w-hover-body tr.w-selected :is(th, td) {
+  background: var(--wt-accent) !important;
+  color: #fff !important;
+}
+
+.w-req-data-list .w-hover-body tr.w-selected :is(th, td) .glyphicon,
+.w-req-data-list .w-hover-body tr.w-selected :is(th, td) span {
+  color: #fff !important;
+}
+
+.w-req-data-list .w-hover-body tr.w-selected > :first-child {
+  box-shadow: inset 3px 0 0 0 rgba(255, 255, 255, .75);
+}
+
+/* ------------------------------------------------------------ detail pane */
+.w-detail-title,
+.w-tools .w-custom-tabs,
+.w-com-tabs {
+  background: var(--b-title);
+  border-bottom: var(--v-border);
+}
+
+.w-detail-title {
+  font-weight: 600 !important;
+  letter-spacing: .01em;
+}
+
+.w-com-tabs .w-tab-btn,
+.w-tools .w-custom-tabs button {
+  border-radius: 0;
+  border: none !important;
+  color: var(--c-gray);
+  font-weight: 500;
+  position: relative;
+}
+
+.w-com-tabs .w-tab-btn:hover,
+.w-tools .w-custom-tabs button:hover {
+  background: var(--b-btn-hover);
+  color: var(--c-default);
+}
+
+.w-com-tabs .w-tab-btn.w-active,
+.w-tools .w-custom-tabs button.w-spec-active {
+  background: transparent !important;
+  color: var(--wt-accent) !important;
+  box-shadow: inset 0 -2px 0 0 var(--wt-accent);
+}
+
+/* Section headers behave like Proxyman's sticky group captions. */
+.w-overview-title {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: 0;
+  padding: 8px 10px 7px;
+  background: var(--b-bar);
+  border-bottom: var(--v-border);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--c-gray);
+}
+
+.w-overview-title label {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 12px;
+  color: var(--c-thin);
+}
+
+.w-overview > .w-props-wrap:last-child {
+  border-top: none;
+}
+
+/* whistle renders the summary block without a caption; give it one so both
+   sections of the inspector read the same way. */
+.w-overview > .w-props-wrap:first-child:before {
+  content: 'Summary';
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 8px 10px 7px;
+  background: var(--b-bar);
+  border-bottom: var(--v-border);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--c-gray);
+}
+
+/* Key/value grid: quiet label column, monospace values, full-width hover. */
+.w-props tr {
+  border-bottom: 1px solid var(--c-border);
+}
+
+.w-props tr:hover :is(th, td) {
+  background: var(--b-hover);
+}
+
+.w-props th {
+  background: transparent;
+  color: var(--c-gray);
+  font-weight: 500;
+  font-size: 12px;
+  text-align: left;
+  padding: 5px 12px 5px 12px;
+  vertical-align: top;
+}
+
+.w-props td {
+  font-family: var(--wt-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--c-default);
+  padding: 5px 10px 5px 0;
+}
+
+.w-props pre {
+  font-family: var(--wt-mono);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.w-req-table :is(th, td) {
+  font-size: 12px;
+}
+
+/* ------------------------------------------------------------- left lists */
+.w-list-left a {
+  line-height: 28px;
+  border-bottom: none;
+  margin: 1px 4px;
+  padding-left: 10px;
+  border-radius: var(--wt-radius);
+  background: transparent;
+}
+
+.w-list-left a:hover:not(.w-list-group) {
+  background: var(--b-list-hover);
+}
+
+.w-list-left .w-active {
+  background: var(--wt-accent) !important;
+  color: #fff !important;
+}
+
+.w-list-left .w-list-group {
+  background: transparent;
+  color: var(--c-gray);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.w-list-data,
+.w-list-left {
+  background: var(--b-bar);
+}
+
+/* ----------------------------------------------------------------- inputs */
+.form-control {
+  border-radius: var(--wt-radius);
+  height: 30px;
+  border: var(--v-border);
+  box-shadow: none;
+  background: var(--b-default);
+  color: var(--c-default);
+}
+
+.form-control:focus {
+  border-color: var(--wt-accent);
+  box-shadow: 0 0 0 3px var(--wt-accent-soft);
+}
+
+/* ---------------------------------------------------------------- buttons */
+.btn {
+  border-radius: var(--wt-radius);
+  font-weight: 500;
+  transition: background-color .12s ease, border-color .12s ease;
+}
+
+.btn-default {
+  background: var(--b-default);
+  border-color: var(--c-border);
+  color: var(--c-heavy);
+}
+
+.btn-default:hover,
+.btn-default:focus {
+  background: var(--b-btn-hover);
+  border-color: var(--c-border);
+  color: var(--c-default);
+}
+
+.btn-primary {
+  background: var(--wt-accent);
+  border-color: var(--wt-accent);
+  color: #fff;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background: var(--wt-accent-hover);
+  border-color: var(--wt-accent-hover);
+}
+
+/* ----------------------------------------------------------------- modals */
+.modal-content {
+  border-radius: var(--wt-radius-lg);
+  border: var(--v-border);
+  box-shadow: 0 18px 48px rgba(10, 14, 22, .28);
+  overflow: hidden;
+}
+
+.modal-header {
+  background: var(--b-title);
+  border-bottom: var(--v-border);
+}
+
+.modal-footer {
+  background: var(--b-bar);
+  border-top: var(--v-border);
+}
+
+/* --------------------------------------------------------------- dividers */
+.w-divider {
+  transition: background-color .12s ease;
+}
+
+.w-divider:hover {
+  background: var(--wt-accent-soft);
+}
+
+/* ------------------------------------------------------------- scrollbars */
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 9px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  background-color: var(--b-rgba50);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--b-rgba70);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ------------------------------------------------------------ misc polish */
+.w-record-status {
+  border-bottom: var(--v-border);
+}
+
+.w-shadow {
+  border-radius: var(--wt-radius) !important;
+  box-shadow: 0 10px 28px rgba(15, 20, 30, .2) !important;
+}
+
+.w-back-to-bottom {
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(15, 20, 30, .18);
+  opacity: 1;
+}

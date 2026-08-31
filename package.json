@@ -13,7 +13,7 @@
     "release:linux": "electron-builder --linux -p always",
     "lint": "eslint --fix lib",
     "lintfix": "npm run lint",
-    "start": "electron ./lib"
+    "start": "electron ."
   },
   "build": {
     "productName": "Whistle",
