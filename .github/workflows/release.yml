@@ -19,6 +19,9 @@ jobs:
   build:
     strategy:
       fail-fast: false
+      # electron-builder creates the draft release on first upload; running the
+      # jobs one at a time keeps three of them from racing to create it.
+      max-parallel: 1
       matrix:
         include:
           - os: macos-latest

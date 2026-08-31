@@ -20,6 +20,13 @@
     "appId": "whistle.client",
     "asar": false,
     "artifactName": "${productName}-v${version}-${os}-${arch}.${ext}",
+    "files": [
+      "**/*",
+      "!docs",
+      "!.github",
+      "!.claude",
+      "!dist"
+    ],
     "copyright": "avenwu",
     "compression": "normal",
     "extends": null,
