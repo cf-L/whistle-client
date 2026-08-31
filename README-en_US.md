@@ -52,11 +52,40 @@ Presets are Apple's Network Link Conditioner profiles (Wi-Fi / LTE / 3G / DSL / 
 
 ### HTTPS certificate and mobile devices
 
-`Tools → HTTPS Certificate` (also linked from the Online dialog). This machine can download the certificate directly or install and trust it in one step from `Whistle` menu → `Install Root CA`; phones and tablets follow the three steps in the dialog: point the proxy at the LAN address (a routable IPv4 is offered first rather than a hostname the device cannot resolve), scan the code or open the certificate URL, then trust it through the iOS or Android path. The QR code is generated locally (`public/pm/js/qrcode.js`, no third-party dependency).
+Capturing HTTPS from a phone or tablet needs three things: the device's proxy pointed at this machine, whistle's root certificate installed **and trusted** on the device, and HTTPS decryption switched on here. One dialog covers all three.
+
+**Where**: `Tools → HTTPS Certificate` in the sidebar. The `Online` dialog also links to it with "Set up HTTPS on another device →".
+
+<img width="260" alt="The HTTPS Certificate entry under Tools" src="./docs/screenshots/tools-entry.png">
 
 <img width="900" alt="HTTPS certificate and mobile setup" src="./docs/screenshots/https-certificate.png">
 
-> The link in the code carries this session's access token — hand it only to your own devices.
+#### Steps
+
+1. **Turn on decryption**: tick `Decrypt HTTPS traffic` at the top of the dialog (whistle's `Capture HTTPS CONNECTs`). Without it HTTPS only shows up as `CONNECT` tunnels with no visible content.
+
+2. **Put the device on the same Wi-Fi**, then point its proxy at the address from step 1 of the dialog (something like `192.168.1.23:8899`). With several interfaces, use the dropdown to pick the one the device can reach.
+   - iOS: `Settings → Wi-Fi → ⓘ next to the network → Configure Proxy → Manual`, server and port copied from the address in the dialog
+   - Android: long-press the network → `Modify network → Advanced → Proxy → Manual`, the same IP and port from the dialog
+
+3. **Install the certificate**: scan the QR code with the device camera, or open the URL from step 2 by hand.
+   - iOS: Safari says the profile was downloaded — install it under `Settings → General → VPN & Device Management`
+   - Android: after downloading, go to `Settings → Security → Encryption & credentials → Install a certificate → CA certificate` and pick the file
+
+4. **iOS needs one more trust step**: `Settings → General → About → Certificate Trust Settings`, then enable the whistle entry. Installing without trusting leaves HTTPS broken — this is the step people miss.
+
+5. **Verify**: open any https site on the device. Its requests should appear in the list with a `200` code rather than `CONNECT`, and the decrypted body should be readable in the Response pane.
+
+This computer does not need that flow: click `Download root certificate` in the dialog, or use `Whistle` menu → `Install Root CA` to install and trust it in one step.
+
+> The link inside the QR code carries this session's access token (without it the device is stopped by whistle's auth), so only hand it to your own devices. The code is generated locally — see [`public/pm/js/qrcode.js`](./public/pm/js/qrcode.js), no third-party dependency.
+
+#### If nothing shows up
+
+- **Only `CONNECT` tunnels, no individual requests**: `Decrypt HTTPS traffic` is off, or the host sits in the `SSL Proxying` exclusion list
+- **The device says the certificate is not trusted**: on iOS, step 4 was skipped; on Android 9+, apps do not trust user-installed CAs unless they ship a `networkSecurityConfig` or you use a debug build — the system browser is unaffected
+- **The device cannot reach the proxy**: use the LAN IP rather than the hostname (devices usually cannot resolve it), and check both are on the same subnet and that the firewall allows that port
+- **A specific app shows no traffic**: it most likely pins its certificate; use a test build or let it through in `SSL Proxying`
 
 ### Proxy Settings
 
@@ -226,7 +255,10 @@ Configure the domain name with such exceptions to the `Bypass List` rule of `Pro
 
 - Manually download updates: Visit [GitHub Releases](https://github.com/avwo/whistle-client/releases) to download the latest version and reinstall according to the above document
 
-#### 3. How to synchronize previous data?
+#### 3. How do I capture HTTPS from a phone or tablet?
+See [HTTPS certificate and mobile devices](#https-certificate-and-mobile-devices): `Tools → HTTPS Certificate` carries the proxy address, the certificate QR code, and the iOS / Android trust steps.
+
+#### 4. How to synchronize previous data?
 By default, the Whistle client uses an independent storage directory. If you want to continue using the directory of the command line version, you can switch back to the default directory of the command line through `Use whistle's default storage directory` in `Proxy Settings`:
 
 <img width="470" alt="image" src="https://github.com/user-attachments/assets/ef6805d0-e05e-48bf-adbc-88677fd22b0c" />

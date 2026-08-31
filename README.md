@@ -52,11 +52,40 @@
 
 ### HTTPS 证书与移动端抓包
 
-`Tools → HTTPS Certificate`（Online 弹窗里也有入口）。桌面端可以直接下载证书，或用 `Whistle` 菜单 → `Install Root CA` 一键装好；手机、平板这类设备则按弹窗里的三步走：代理地址（默认给的是本机的局域网 IP，不是解析不到的主机名）、扫码或打开证书链接、按 iOS / Android 各自的路径信任证书。二维码是本地生成的（`public/pm/js/qrcode.js`，无第三方依赖）。
+手机、平板抓 HTTPS 需要三件事：设备的代理指向本机、设备装上 whistle 的根证书并**信任**、客户端里打开 HTTPS 解密。这三步都收在一个弹窗里。
+
+**入口**：左侧 `Tools → HTTPS Certificate`。右上角 `Online` 弹窗里也有一条「Set up HTTPS on another device →」。
+
+<img width="260" alt="Tools 里的 HTTPS Certificate 入口" src="./docs/screenshots/tools-entry.png">
 
 <img width="900" alt="HTTPS 证书与移动端引导" src="./docs/screenshots/https-certificate.png">
 
-> 二维码里的链接带着当前会话的访问令牌，只发给自己的设备。
+#### 步骤
+
+1. **打开 HTTPS 解密**：弹窗顶部勾上 `Decrypt HTTPS traffic`（等价于 whistle 的 `Capture HTTPS CONNECTs`）。不勾的话 HTTPS 只会以 `CONNECT` 隧道的形式出现，看不到内容。
+
+2. **让手机和电脑在同一个 Wi-Fi 下**，然后把手机代理指向弹窗第 1 步给出的地址（形如 `192.168.1.23:8899`）。多网卡时用左边的下拉切换，选手机能访问到的那个网段。
+   - iOS：`设置 → 无线局域网 → 点当前 Wi-Fi 右侧的 ⓘ → 配置代理 → 手动`，服务器和端口照抄弹窗里给的地址
+   - Android：长按当前 Wi-Fi → `修改网络 → 高级选项 → 代理 → 手动`，填同样的 IP 和端口（就是弹窗里那条地址）
+
+3. **装证书**：用手机相机扫弹窗右侧的二维码，或手动打开第 2 步那条 URL。
+   - iOS：Safari 会提示「已下载描述文件」，去 `设置 → 通用 → VPN与设备管理` 安装
+   - Android：下载后去 `设置 → 安全 → 加密与凭据 → 安装证书 → CA 证书` 选中刚下载的文件
+
+4. **iOS 必须再信任一次**：`设置 → 通用 → 关于本机 → 证书信任设置`，把 whistle 那一项的开关打开。只装不信任，HTTPS 依旧连不上——这一步是最常见的漏项。
+
+5. **验证**：手机随便打开一个 https 网站，客户端列表里应该出现该域名的请求，`Code` 是 200 而不是 `CONNECT`，选中后在 Response 里能看到解密后的内容。
+
+本机（电脑自己）的证书不用走这套：弹窗里点 `Download root certificate`，或直接用 `Whistle` 菜单 → `Install Root CA` 一键安装并信任。
+
+> 二维码里的链接带着当前会话的访问令牌（不带的话手机会被鉴权挡住），只发给自己的设备。二维码是本地生成的，见 [`public/pm/js/qrcode.js`](./public/pm/js/qrcode.js)，没有引入第三方依赖。
+
+#### 抓不到时先看这几项
+
+- **只看到 `CONNECT` / tunnel，没有具体请求**：`Decrypt HTTPS traffic` 没开，或者该域名被加进了 `SSL Proxying` 的排除列表
+- **手机提示证书不受信任**：iOS 漏了第 4 步的「证书信任设置」；Android 9 以上，App 默认不信任用户安装的 CA，只有自家 App 配了 `networkSecurityConfig` 或用 debug 包才抓得到，系统浏览器不受影响
+- **手机连不上代理**：地址别用主机名（手机通常解析不了），换成局域网 IP；确认两台设备在同一网段、电脑防火墙没拦这个端口
+- **部分 App 无流量**：这类 App 多半用了证书绑定（SSL Pinning），换测试包或在 `SSL Proxying` 里放过它
 
 ### Proxy Settings
 
@@ -204,7 +233,10 @@ w2 install --registry=https://registry.npmmirror.com whistle.script whistle.insp
 - 检查新版本：点击左上角 Whistle 菜单 → Check Update → 按照提示完成更新
 - 手动下载更新：访问 [GitHub Releases](https://github.com/avwo/whistle-client/releases) 下载最新版本，按上面的文档重新安装
 
-#### 3. 如何同步之前的数据？
+#### 3. 手机 / 平板怎么抓 HTTPS？
+见 [HTTPS 证书与移动端抓包](#https-证书与移动端抓包)：`Tools → HTTPS Certificate` 里有代理地址、证书二维码和 iOS / Android 的信任步骤。
+
+#### 4. 如何同步之前的数据？
 Whistle 客户端默认使用独立的存储目录，如果要继续用命令行版本的目录，可以通过  `Proxy Settings` 的 `Use whistle's default storage directory` 切回命令行的默认目录：
 
 <img width="470" alt="image" src="https://github.com/user-attachments/assets/ef6805d0-e05e-48bf-adbc-88677fd22b0c" />
