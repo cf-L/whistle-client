@@ -280,7 +280,7 @@ To cut a release:
    ```bash
    git tag v1.7.1 && git push origin v1.7.1
    ```
-3. The workflow uploads all three platforms into one **draft** release; publish it from GitHub once the artifacts look right
+3. The workflow uploads all three platforms into one **draft** release and fills its body with that version's `CHANGELOG.md` section (`scripts/release-notes.js`); publish it from GitHub once the artifacts look right
 
 The client's `Check Update` reads the version from this repo's `main` branch `package.json`, and Download opens `releases/download/v<version>/<installer for the current platform>` — so release assets have to keep the `Whistle-v<version>-<os>-<arch>.<ext>` naming that electron-builder's `artifactName` already produces.
 

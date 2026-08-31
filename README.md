@@ -258,7 +258,7 @@ Whistle 客户端默认使用独立的存储目录，如果要继续用命令行
    ```bash
    git tag v1.7.1 && git push origin v1.7.1
    ```
-3. 工作流会把三个平台的产物传到同一个**草稿** release，检查无误后在 GitHub 上点 Publish
+3. 工作流会把三个平台的产物传到同一个**草稿** release，正文自动取 `CHANGELOG.md` 里对应版本那一段（`scripts/release-notes.js`），检查无误后在 GitHub 上点 Publish
 
 客户端的 `Check Update` 读取本仓库 `main` 分支的 `package.json` 版本号，点 Download 会跳到 `releases/download/v<版本>/<当前平台的安装包>`——所以 release 里的文件名必须保持 `Whistle-v<版本>-<平台>-<架构>.<后缀>` 这个格式（electron-builder 的 `artifactName` 已经按这个配好）。
 
