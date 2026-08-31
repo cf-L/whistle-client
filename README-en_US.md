@@ -109,8 +109,8 @@ Please select the corresponding installation steps according to your operating s
 ##### 1. Select the correct installation package
 
 Select the corresponding version according to your Mac processor type:
-- Apple Silicon chip (M1/M2/M3 series) → Download ARM 64-bit version: [Whistle-vx.y.z-mac-arm64.dmg](https://github.com/avwo/whistle-client/releases)
-- Intel/AMD chip → Download x86_64 version: [Whistle-vx.y.z-mac-x64.dmg](https://github.com/avwo/whistle-client/releases)
+- Apple Silicon chip (M1/M2/M3 series) → Download ARM 64-bit version: [Whistle-vx.y.z-mac-arm64.dmg](https://github.com/cf-L/whistle-client/releases)
+- Intel/AMD chip → Download x86_64 version: [Whistle-vx.y.z-mac-x64.dmg](https://github.com/cf-L/whistle-client/releases)
 
 ##### 2. Installation steps
 
@@ -127,6 +127,10 @@ Select the corresponding version according to your Mac processor type:
 
 ##### 3. Security Tips
 
+This fork's installers are **not code-signed or notarized**, so macOS refuses them on first launch. Either:
+- right-click Whistle in Finder → Open → Open again, or
+- run `xattr -dr com.apple.quarantine /Applications/Whistle.app`
+
 Some enterprise security software may give false positives. Suggestions:
 
 - Select "Allow" when running for the first time
@@ -142,9 +146,9 @@ Some enterprise security software may give false positives. Suggestions:
 
 Choose the appropriate version according to your permission requirements:
 
-- [Recommended] Standard Edition (Administrator permissions required): [Whistle-vx.y.z-win-x64.exe](https://github.com/avwo/whistle-client/releases)
+- [Recommended] Standard Edition (Administrator permissions required): [Whistle-vx.y.z-win-x64.exe](https://github.com/cf-L/whistle-client/releases)
     > Supports full functionality, including pseudo-protocols (whistle://client)
-- User version (no administrator privileges required): [Whistle-user-installer-vx.y.z-win-x64.exe](https://github.com/avwo/whistle-client/releases)
+- User version (no administrator privileges required): [Whistle-user-installer-vx.y.z-win-x64.exe](https://github.com/cf-L/whistle-client/releases)
     > Functional limitations: pseudo-protocol calls are not supported
 
 ##### 2. Run the installer
@@ -164,8 +168,8 @@ After double-clicking the downloaded installation package, you may see the follo
 This client currently supports two Linux distributions: Fedora and Ubuntu.
 
 Download the installation package:
-- Intel/AMD 64-bit (x86_64): [Whistle-vx.y.z-linux-x86_64.AppImage](https://github.com/avwo/whistle-client/releases)
-- ARM 64-bit (arm64): [Whistle-vx.y.z-linux-arm64.AppImage](https://github.com/avwo/whistle-client/releases)
+- Intel/AMD 64-bit (x86_64): [Whistle-vx.y.z-linux-x86_64.AppImage](https://github.com/cf-L/whistle-client/releases)
+- ARM 64-bit (arm64): [Whistle-vx.y.z-linux-arm64.AppImage](https://github.com/cf-L/whistle-client/releases)
 
 Installation method reference: https://itsfoss.com/cant-run-appimage-ubuntu/
 </details>
@@ -253,7 +257,7 @@ Configure the domain name with such exceptions to the `Bypass List` rule of `Pro
 
 - Check for new versions: Click the Whistle menu in the upper left corner → Check Update → Follow the prompts to complete the update
 
-- Manually download updates: Visit [GitHub Releases](https://github.com/avwo/whistle-client/releases) to download the latest version and reinstall according to the above document
+- Manually download updates: Visit [GitHub Releases](https://github.com/cf-L/whistle-client/releases) to download the latest version and reinstall according to the above document
 
 #### 3. How do I capture HTTPS from a phone or tablet?
 See [HTTPS certificate and mobile devices](#https-certificate-and-mobile-devices): `Tools → HTTPS Certificate` carries the proxy address, the certificate QR code, and the iOS / Android trust steps.
@@ -264,6 +268,27 @@ By default, the Whistle client uses an independent storage directory. If you wan
 <img width="470" alt="image" src="https://github.com/user-attachments/assets/ef6805d0-e05e-48bf-adbc-88677fd22b0c" />
 
 > Note: Only a single Whistle instance should access this directory simultaneously. Running multiple instances concurrently will lead to configuration conflicts and data corruption!
+
+# Building and releasing
+
+Installers are built by GitHub Actions on native runners (`.github/workflows/release.yml`): arm64 and x64 dmgs on macOS, an x64 nsis installer on Windows, and x64 / arm64 AppImages on Linux (they run on both Fedora and Ubuntu).
+
+To cut a release:
+
+1. Bump `version` in `package.json` and add a `CHANGELOG.md` entry
+2. Commit, then tag and push:
+   ```bash
+   git tag v1.6.11 && git push origin v1.6.11
+   ```
+3. The workflow uploads all three platforms into one **draft** release; publish it from GitHub once the artifacts look right
+
+The client's `Check Update` reads the version from this repo's `main` branch `package.json`, and Download opens `releases/download/v<version>/<installer for the current platform>` — so release assets have to keep the `Whistle-v<version>-<os>-<arch>.<ext>` naming that electron-builder's `artifactName` already produces.
+
+Local builds (current platform only):
+
+```bash
+npm run build:mac    # or build:win / build:linux
+```
 
 # Quick Start
 

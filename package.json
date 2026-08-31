@@ -6,11 +6,11 @@
   "author": "avenwu <avwu@qq.com>",
   "scripts": {
     "build:win": "electron-builder --win --x64",
-    "build:mac": "electron-builder --mac --linux",
-    "build:linux": "electron-builder --linux",
+    "build:mac": "electron-builder --mac --arm64 --x64",
+    "build:linux": "electron-builder --linux --x64 --arm64",
     "release:win": "electron-builder --win --x64 -p always",
-    "release:mac": "electron-builder --mac --linux -p always",
-    "release:linux": "electron-builder --linux -p always",
+    "release:mac": "electron-builder --mac --arm64 --x64 -p always",
+    "release:linux": "electron-builder --linux --x64 --arm64 -p always",
     "lint": "eslint --fix lib",
     "lintfix": "npm run lint",
     "start": "electron ."
@@ -26,7 +26,7 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "avwo",
+        "owner": "cf-L",
         "repo": "whistle-client",
         "releaseType": "draft"
       }
@@ -94,5 +94,9 @@
     "npminstall": "^7.9.0",
     "whistle": "^2.10.9",
     "whistle.proxyauth": "^1.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cf-L/whistle-client.git"
   }
 }

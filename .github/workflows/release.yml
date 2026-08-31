@@ -1,0 +1,72 @@
+name: Release
+
+# Installers are built on their native runners: dmg needs macOS, nsis is built
+# with wine only unreliably, and AppImage wants a real Linux filesystem. Each
+# job uploads into the same draft release, which is published by hand once the
+# artifacts have been smoke-tested.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Upload to a draft GitHub release
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            name: mac
+            script: mac
+          - os: windows-latest
+            name: win
+            script: win
+          - os: ubuntu-latest
+            name: linux
+            script: linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # AppImage on the GitHub runners needs FUSE for its own tooling.
+      - name: Install Linux build deps
+        if: matrix.name == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfuse2
+
+      - run: npm ci
+
+      - run: npx eslint lib
+
+      - name: Build installers
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The app is unsigned; skip the notarization step rather than failing.
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: >-
+          npm run ${{ (startsWith(github.ref, 'refs/tags/v') || inputs.publish)
+          && format('release:{0}', matrix.script)
+          || format('build:{0}', matrix.script) }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: whistle-${{ matrix.name }}
+          if-no-files-found: error
+          path: |
+            dist/*.dmg
+            dist/*.exe
+            dist/*.AppImage
+            dist/*.blockmap
+            dist/latest*.yml

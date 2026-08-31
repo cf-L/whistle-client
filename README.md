@@ -109,8 +109,8 @@
 ##### 1. 选择正确的安装包
 
 根据你的 Mac 处理器类型选择对应版本：
-- Apple Silicon 芯片 (M1/M2/M3系列) → 下载 ARM 64位版本：[Whistle-vx.y.z-mac-arm64.dmg](https://github.com/avwo/whistle-client/releases) 
-- Intel/AMD 芯片 → 下载 x86_64 版本：[Whistle-vx.y.z-mac-x64.dmg](https://github.com/avwo/whistle-client/releases) 
+- Apple Silicon 芯片 (M1/M2/M3系列) → 下载 ARM 64位版本：[Whistle-vx.y.z-mac-arm64.dmg](https://github.com/cf-L/whistle-client/releases) 
+- Intel/AMD 芯片 → 下载 x86_64 版本：[Whistle-vx.y.z-mac-x64.dmg](https://github.com/cf-L/whistle-client/releases) 
 
 ##### 2. 安装步骤
 
@@ -124,6 +124,10 @@
 
 ##### 3. 安全提示
 
+本 fork 的安装包**没有做代码签名和公证**，macOS 首次打开会提示「无法验证开发者」，两种处理方式任选其一：
+- 在访达里右键点 Whistle → 「打开」→ 再点「打开」
+- 或执行 `xattr -dr com.apple.quarantine /Applications/Whistle.app`
+
 某些企业安全软件可能误报，建议：
 - 首次运行时选择 "允许" 操作
 - 如有持续拦截，请联系IT部门将 Whistle 加入白名单
@@ -136,9 +140,9 @@
 
 根据你的权限需求选择适合的版本：
 
-- 【推荐】标准版（需管理员权限）：[Whistle-vx.y.z-win-x64.exe](https://github.com/avwo/whistle-client/releases)
+- 【推荐】标准版（需管理员权限）：[Whistle-vx.y.z-win-x64.exe](https://github.com/cf-L/whistle-client/releases)
     > 支持完整功能，包括伪协议 (whistle://client)
-- 用户版（无需管理员权限）：[Whistle-user-installer-vx.y.z-win-x64.exe](https://github.com/avwo/whistle-client/releases)
+- 用户版（无需管理员权限）：[Whistle-user-installer-vx.y.z-win-x64.exe](https://github.com/cf-L/whistle-client/releases)
     > 功能限制：不支持伪协议调用
 
 ##### 2. 运行安装程序
@@ -156,8 +160,8 @@
 本客户端目前支持 Fedora 和 Ubuntu 两个 Linux 发行版。
 
 下载安装包：
-- Intel/AMD 64位（x86_64）：[Whistle-vx.y.z-linux-x86_64.AppImage](https://github.com/avwo/whistle-client/releases) 
-- ARM 64位（arm64）：[Whistle-vx.y.z-linux-arm64.AppImage](https://github.com/avwo/whistle-client/releases) 
+- Intel/AMD 64位（x86_64）：[Whistle-vx.y.z-linux-x86_64.AppImage](https://github.com/cf-L/whistle-client/releases) 
+- ARM 64位（arm64）：[Whistle-vx.y.z-linux-arm64.AppImage](https://github.com/cf-L/whistle-client/releases) 
 
 安装方法参考：https://zhuanlan.zhihu.com/p/517734580
 </details>
@@ -231,7 +235,7 @@ w2 install --registry=https://registry.npmmirror.com whistle.script whistle.insp
 
 #### 2. 如何更新客户端？
 - 检查新版本：点击左上角 Whistle 菜单 → Check Update → 按照提示完成更新
-- 手动下载更新：访问 [GitHub Releases](https://github.com/avwo/whistle-client/releases) 下载最新版本，按上面的文档重新安装
+- 手动下载更新：访问 [GitHub Releases](https://github.com/cf-L/whistle-client/releases) 下载最新版本，按上面的文档重新安装
 
 #### 3. 手机 / 平板怎么抓 HTTPS？
 见 [HTTPS 证书与移动端抓包](#https-证书与移动端抓包)：`Tools → HTTPS Certificate` 里有代理地址、证书二维码和 iOS / Android 的信任步骤。
@@ -242,6 +246,27 @@ Whistle 客户端默认使用独立的存储目录，如果要继续用命令行
 <img width="470" alt="image" src="https://github.com/user-attachments/assets/ef6805d0-e05e-48bf-adbc-88677fd22b0c" />
 
 > 注意：请确保同一时间只有一个 Whistle 实例访问该目录，多实例同时运行会造成配置冲突和数据覆盖！
+
+# 构建与发布
+
+安装包由 GitHub Actions 在各自的原生 runner 上构建（`.github/workflows/release.yml`）：macOS 出 arm64 / x64 两个 dmg，Windows 出 x64 的 nsis 安装包，Linux 出 x64 / arm64 的 AppImage（Fedora、Ubuntu 通用）。
+
+发布一个版本：
+
+1. 改 `package.json` 里的 `version`，在 `CHANGELOG.md` 里补一条
+2. 提交后打 tag 并推送：
+   ```bash
+   git tag v1.6.11 && git push origin v1.6.11
+   ```
+3. 工作流会把三个平台的产物传到同一个**草稿** release，检查无误后在 GitHub 上点 Publish
+
+客户端的 `Check Update` 读取本仓库 `main` 分支的 `package.json` 版本号，点 Download 会跳到 `releases/download/v<版本>/<当前平台的安装包>`——所以 release 里的文件名必须保持 `Whistle-v<版本>-<平台>-<架构>.<后缀>` 这个格式（electron-builder 的 `artifactName` 已经按这个配好）。
+
+本地构建（只能出当前系统的包）：
+
+```bash
+npm run build:mac    # 或 build:win / build:linux
+```
 
 # 快速上手
 
