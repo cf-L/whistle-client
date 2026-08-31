@@ -1,4 +1,12 @@
-> Get the latest release: https://github.com/avwo/whistle-client/releases
+> Get the latest release: https://github.com/cf-L/whistle-client/releases
+
+# v1.7.0
+1. feat: add a Proxyman-style modern UI, served through whistle's `uiMiddleware` (the classic UI stays available under `Whistle` menu → `Modern UI`)
+2. feat: stacked ⌘F filters with AND/OR, JSON Text / JSON View / Preview response viewers, dockable inspector, dark mode
+3. feat: Map Local with regex and a native file picker, Throttle presets from Apple's Network Link Conditioner
+4. feat: add `Tools → HTTPS Certificate` with the proxy address, a QR code for the certificate URL, and the iOS / Android trust steps
+5. feat: restyle the Proxy Settings window to match the rest of the app
+6. feat: build and publish this fork's own installers; `Check Update` now follows cf-L/whistle-client
 
 # v1.6.10
 1. feat: update whistle to v2.10.9

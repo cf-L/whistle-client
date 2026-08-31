@@ -256,7 +256,7 @@ Whistle 客户端默认使用独立的存储目录，如果要继续用命令行
 1. 改 `package.json` 里的 `version`，在 `CHANGELOG.md` 里补一条
 2. 提交后打 tag 并推送：
    ```bash
-   git tag v1.6.11 && git push origin v1.6.11
+   git tag v1.7.1 && git push origin v1.7.1
    ```
 3. 工作流会把三个平台的产物传到同一个**草稿** release，检查无误后在 GitHub 上点 Publish
 

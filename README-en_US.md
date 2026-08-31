@@ -278,7 +278,7 @@ To cut a release:
 1. Bump `version` in `package.json` and add a `CHANGELOG.md` entry
 2. Commit, then tag and push:
    ```bash
-   git tag v1.6.11 && git push origin v1.6.11
+   git tag v1.7.1 && git push origin v1.7.1
    ```
 3. The workflow uploads all three platforms into one **draft** release; publish it from GitHub once the artifacts look right
 
