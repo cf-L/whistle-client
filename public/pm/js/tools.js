@@ -1,7 +1,9 @@
-import { $, el } from './util.js';
+import { $, el, copyText } from './util.js';
 import * as api from './api.js';
 import { toast } from './ui.js';
+import { toSvg } from './qrcode.js';
 import { icon } from './icons.js';
+import * as store from './store.js';
 
 // The desktop shell exposes a native picker over IPC; in a plain browser the
 // field stays a normal text input.
@@ -472,7 +474,114 @@ const breakpoint = async () => {
     + 'enough to inspect or abort them from the request list, but not to edit them in flight.');
 };
 
+
+// Everything a phone or tablet needs to have its HTTPS decrypted: the proxy
+// address to point at, the certificate URL behind a QR code, and the per-OS
+// trust step people forget. The desktop's own certificate is installed from the
+// app menu, which this dialog links to rather than duplicates.
+const certificate = async () => {
+  const server = store.state.server || {};
+  const port = server.port;
+  // A phone needs a routable LAN address, so real IPv4 comes first and the
+  // machine hostname (which the device usually cannot resolve) comes last.
+  const lan = (server.ipv4 || []).filter((ip) => !/^169\.254\./.test(ip) && ip !== '127.0.0.1');
+  const hosts = [...new Set([...lan, ...(server.ipv4 || []), server.host].filter(Boolean))];
+  const state = { host: hosts[0] || '127.0.0.1', intercept: false };
+  try {
+    const data = await api.getData({ startTime: -1, count: 0 });
+    state.intercept = !!(data && data.interceptHttpsConnects);
+  } catch (e) { /* default off */ }
+
+  const certUrl = () => `http://${state.host}:${port}${api.rootCAUrl}`;
+  const proxyAddr = () => `${state.host}:${port}`;
+
+  const qrBox = el('div', { class: 'qr-box' });
+  const urlText = el('code', { class: 'cert-url' });
+  const proxyText = el('code', { class: 'cert-url' });
+  const refresh = () => {
+    const svg = toSvg(certUrl(), 176);
+    qrBox.innerHTML = svg || '';
+    urlText.textContent = certUrl();
+    proxyText.textContent = proxyAddr();
+  };
+
+  const hostPicker = el('select', {
+    class: 'filter-select',
+    onchange: (e) => {
+      state.host = e.target.value;
+      refresh();
+    },
+  }, hosts.map((h) => el('option', { value: h, text: h, selected: h === state.host ? 'selected' : null })));
+
+  const copyBtn = (getText, label) => el('button', {
+    class: 'link-btn',
+    text: label,
+    onclick: async () => {
+      await copyText(getText());
+      toast(`${label.replace('Copy ', '')} copied`);
+    },
+  });
+
+  const toggle = el('label', { class: 'switch' }, [
+    el('input', {
+      type: 'checkbox',
+      checked: state.intercept ? 'checked' : null,
+      onchange: async (e) => {
+        try {
+          await api.setInterceptHttps(e.target.checked ? 1 : 0);
+          toast(e.target.checked ? 'HTTPS interception on' : 'HTTPS interception off');
+        } catch (err) {
+          toast(`Failed: ${err.message}`);
+        }
+      },
+    }),
+    el('span', { text: 'Decrypt HTTPS traffic' }),
+  ]);
+
+  const step = (n, title, body) => el('div', { class: 'cert-step' }, [
+    el('span', { class: 'cert-step-no', text: String(n) }),
+    el('div', { class: 'cert-step-body' }, [
+      el('div', { class: 'cert-step-title', text: title }),
+      body,
+    ]),
+  ]);
+
+  const body = el('div', { class: 'cert-pane' }, [
+    toggle,
+    el('div', { class: 'field-label', text: 'This computer' }),
+    el('div', { class: 'cert-row' }, [
+      el('a', { class: 'btn', href: api.rootCAUrl, target: '_blank', text: 'Download root certificate' }),
+      el('span', { class: 'hint', text: 'Or use the Whistle menu → Install Root CA to install and trust it in one step.' }),
+    ]),
+    el('div', { class: 'field-label', text: 'Phone, tablet or another computer' }),
+    el('div', { class: 'cert-mobile' }, [
+      el('div', { class: 'cert-steps' }, [
+        step(1, 'Put the device on this network and set its HTTP proxy to', el('div', { class: 'cert-row' }, [
+          hosts.length > 1 ? hostPicker : null,
+          proxyText,
+          copyBtn(proxyAddr, 'Copy address'),
+        ])),
+        step(2, 'Open this URL on the device, or scan the code', el('div', { class: 'cert-row' }, [
+          urlText,
+          copyBtn(certUrl, 'Copy URL'),
+        ])),
+        step(3, 'Trust the certificate', el('div', { class: 'hint' }, [
+          el('div', { text: 'iOS: Settings → General → VPN & Device Management → install the profile, then Settings → General → About → Certificate Trust Settings → turn it on.' }),
+          el('div', { text: 'Android: install it under Settings → Security → Encryption & credentials → Install a certificate → CA certificate.' }),
+        ])),
+      ]),
+      qrBox,
+    ]),
+  ]);
+
+  refresh();
+  openModal('HTTPS Certificate', body, null,
+    'HTTPS is only decrypted on devices that trust this root certificate. The link '
+    + 'below carries this session\'s access token, so only hand it to your own devices.');
+};
+
 const TOOLS = {
+  cert: certificate,
   'map-local': mapLocal,
   'map-remote': mapRemote,
   throttle,

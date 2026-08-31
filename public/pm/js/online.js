@@ -1,6 +1,6 @@
 import { el, formatSize, copyText } from './util.js';
 import * as store from './store.js';
-import { openModal } from './tools.js';
+import { openModal, open as openTool } from './tools.js';
 import { toast } from './ui.js';
 
 const pct = (value) => (value == null ? '' : String(value));
@@ -64,6 +64,12 @@ export const open = () => {
   openModal('Online', el('div', {}, [
     el('div', { class: 'field-label', text: 'Addresses' }),
     addrList,
+    // Pointing a device here only captures HTTPS once it trusts the root CA.
+    el('div', { class: 'cert-row' }, el('button', {
+      class: 'link-btn',
+      text: 'Set up HTTPS on another device →',
+      onclick: () => openTool('cert'),
+    })),
     el('div', { class: 'field-label', text: 'Traffic' }),
     stats,
     el('div', { class: 'field-label', text: 'About' }),

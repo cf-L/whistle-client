@@ -50,6 +50,14 @@ Presets are Apple's Network Link Conditioner profiles (Wi-Fi / LTE / 3G / DSL / 
 
 <img width="900" alt="Throttle presets" src="./docs/screenshots/throttle.png">
 
+### HTTPS certificate and mobile devices
+
+`Tools → HTTPS Certificate` (also linked from the Online dialog). This machine can download the certificate directly or install and trust it in one step from `Whistle` menu → `Install Root CA`; phones and tablets follow the three steps in the dialog: point the proxy at the LAN address (a routable IPv4 is offered first rather than a hostname the device cannot resolve), scan the code or open the certificate URL, then trust it through the iOS or Android path. The QR code is generated locally (`public/pm/js/qrcode.js`, no third-party dependency).
+
+<img width="900" alt="HTTPS certificate and mobile setup" src="./docs/screenshots/https-certificate.png">
+
+> The link in the code carries this session's access token — hand it only to your own devices.
+
 ### Proxy Settings
 
 Same options as upstream, restyled to match the rest of the app.

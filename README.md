@@ -50,6 +50,14 @@
 
 <img width="900" alt="Throttle 预设" src="./docs/screenshots/throttle.png">
 
+### HTTPS 证书与移动端抓包
+
+`Tools → HTTPS Certificate`（Online 弹窗里也有入口）。桌面端可以直接下载证书，或用 `Whistle` 菜单 → `Install Root CA` 一键装好；手机、平板这类设备则按弹窗里的三步走：代理地址（默认给的是本机的局域网 IP，不是解析不到的主机名）、扫码或打开证书链接、按 iOS / Android 各自的路径信任证书。二维码是本地生成的（`public/pm/js/qrcode.js`，无第三方依赖）。
+
+<img width="900" alt="HTTPS 证书与移动端引导" src="./docs/screenshots/https-certificate.png">
+
+> 二维码里的链接带着当前会话的访问令牌，只发给自己的设备。
+
 ### Proxy Settings
 
 配置项与上游完全一致，只是换成了与主界面同一套视觉。
