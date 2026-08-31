@@ -2,12 +2,66 @@
 
 中文 · [English](./README-en_US.md)
 
-[Whistle](https://github.com/avwo/whistle) 是一款强大的跨平台网络抓包与调试工具。本仓库为官方桌面客户端，支持系统：
+> **本仓库 fork 自 [avwo/whistle-client](https://github.com/avwo/whistle-client)。**
+> 上游的全部功能保持不变，本 fork 在其之上新增了一套 Proxyman 风格的现代界面（见下方[现代界面](#现代界面本-fork-新增)）。上游的问题请提到上游仓库，界面相关的问题提到本仓库。
+
+
+[Whistle](https://github.com/avwo/whistle) 是一款强大的跨平台网络抓包与调试工具。本仓库 fork 自它的官方桌面客户端，支持系统：
 - macOS（Apple Silicon / Intel）
 - Windows
 - Linux（Fedora / Ubuntu）
 
 > 若在无图形界面的服务器或特殊设备上使用，请改用命令行版 Whistle：https://github.com/avwo/whistle
+
+# 现代界面（本 fork 新增）
+
+一套自建的抓包界面，通过 whistle 的 `uiMiddleware` 钩子挂载在 whistle 自己的 Web 服务上（`/pm`），与 `/cgi-bin` 同源，插件的 iframe 挂载方式不变。上游那套经典界面依旧保留，随时可以切回去。
+
+- 默认启用；`Whistle` 菜单 → `Modern UI` 取消勾选即可切回经典界面
+- 视觉对齐 Claude Desktop：浮起的侧边栏、圆角、配色；若本机装有 Claude Desktop 会直接使用其中的 Anthropic Sans 字体，没有则回落到系统字体（字体文件不会被复制进本仓库）
+
+### 抓包列表与 Inspector
+
+请求列表是 Proxyman 式的多列表格（ID / URL / Client / Method / Status / Code / Time / Duration / Size），支持排序、右键菜单、Pinned 与 Saved 收藏。底部 Inspector 左右分栏：左边 Request，右边 Response。
+
+<img width="900" alt="主界面与 Inspector" src="./docs/screenshots/main-inspector.png">
+
+### 多条件过滤（⌘F）
+
+`⌘F` 唤出过滤面板，可以叠加任意多条件，每条可选字段（URL / Host / Path / Method / Status / Headers / Body / Type）与匹配方式（包含 / 不包含 / 等于 / 正则），整体按 AND 或 OR 组合，可以保存。`ESC` 退出过滤。
+
+<img width="900" alt="多条件过滤" src="./docs/screenshots/filters.png">
+
+### 深色模式与 Inspector 停靠位置
+
+右上角两个按钮切换 Inspector 停在底部还是右侧，再点当前项即可收起；停靠位置和主题都会记住。响应体支持 JSON Text（带行号的高亮源码）、JSON View（可折叠树 + 关键字过滤 + 一键复制）、Raw、Hex、Preview 几种视图。
+
+<img width="900" alt="深色模式与右侧停靠" src="./docs/screenshots/dark-dock-right.png">
+
+### Map Local
+
+支持 URL、通配符、`/regex/` 与 Proxyman 风格的裸正则，本地文件可以直接调系统文件选择器挑。
+
+<img width="900" alt="Map Local" src="./docs/screenshots/map-local.png">
+
+### Throttle
+
+预设直接照搬 Apple Network Link Conditioner 的档位（Wi-Fi / LTE / 3G / DSL / Edge / High Latency DNS / Very Bad Network / 100% Loss），也可以自定义限速与延迟。
+
+<img width="900" alt="Throttle 预设" src="./docs/screenshots/throttle.png">
+
+### Proxy Settings
+
+配置项与上游完全一致，只是换成了与主界面同一套视觉。
+
+<img width="470" alt="Proxy Settings" src="./docs/screenshots/proxy-settings.png">
+
+> 截图中的请求全部来自一个本地示例服务（`127.0.0.1:4399`），不包含任何真实流量。
+
+### 已知限制
+
+- 断点（Breakpoint）是基于 whistle 的 `reqDelay://` 做的“挂起”，不是可交互改包的真断点
+- 规则编辑器是纯文本框，没有 whistle 规则语法高亮；需要时可切回经典界面编辑
 
 # 安装
 请根据你的操作系统选择对应的安装步骤。

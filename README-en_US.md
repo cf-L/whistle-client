@@ -2,12 +2,66 @@
 
 [中文](./README.md) · English
 
-[Whistle](https://github.com/avwo/whistle) is a powerful cross-platform network packet capture and debugging tool. This client is the official desktop version and supports the following operating systems:
+> **This repository is a fork of [avwo/whistle-client](https://github.com/avwo/whistle-client).**
+> Everything upstream still works the same; this fork adds a Proxyman-style modern UI on top of it (see [Modern UI](#modern-ui-added-by-this-fork) below). Report upstream bugs upstream, UI bugs here.
+
+
+[Whistle](https://github.com/avwo/whistle) is a powerful cross-platform network packet capture and debugging tool. This repository is a fork of its official desktop client and supports the following operating systems:
 - macOS（Apple Silicon / Intel）
 - Windows
 - Linux（Fedora / Ubuntu）
 
 > If the system you are using does not support the Whistle Client (such as a server without a graphical interface or a special device), you can use the Whistle: https://github.com/avwo/whistle
+
+# Modern UI (added by this fork)
+
+A self-contained capture UI mounted on whistle's own web server through its `uiMiddleware` hook (at `/pm`), so it shares an origin with `/cgi-bin` and keeps the plugin iframe contract intact. The upstream classic UI is still there and one menu item away.
+
+- Enabled by default; uncheck `Whistle` menu → `Modern UI` to go back to the classic one
+- Visually aligned with Claude Desktop: floating sidebar, rounded corners, matching palette. When Claude Desktop is installed the UI uses its Anthropic Sans; otherwise it falls back to the system face (no font file is copied into this repo)
+
+### Request list and inspector
+
+A Proxyman-style column table (ID / URL / Client / Method / Status / Code / Time / Duration / Size) with sorting, a context menu, and Pinned / Saved marks. The inspector splits request on the left and response on the right.
+
+<img width="900" alt="Request list and inspector" src="./docs/screenshots/main-inspector.png">
+
+### Stacked filters (⌘F)
+
+`⌘F` opens the filter panel. Stack as many conditions as you like — each picks a field (URL / Host / Path / Method / Status / Headers / Body / Type) and a match (contains / not contains / equals / regex) — combined with AND or OR, and saveable. `ESC` leaves filter mode.
+
+<img width="900" alt="Stacked filters" src="./docs/screenshots/filters.png">
+
+### Dark mode and inspector docking
+
+The two buttons at the top right dock the inspector at the bottom or on the right; clicking the active one hides it. Both the dock position and the theme are remembered. Response bodies render as JSON Text (highlighted source with line numbers), JSON View (collapsible tree with key/value filtering and one-click copy), Raw, Hex, or Preview.
+
+<img width="900" alt="Dark mode with the inspector docked right" src="./docs/screenshots/dark-dock-right.png">
+
+### Map Local
+
+Accepts URLs, wildcards, `/regex/`, and Proxyman-style bare regex; the local file is picked through the native file dialog.
+
+<img width="900" alt="Map Local" src="./docs/screenshots/map-local.png">
+
+### Throttle
+
+Presets are Apple's Network Link Conditioner profiles (Wi-Fi / LTE / 3G / DSL / Edge / High Latency DNS / Very Bad Network / 100% Loss), plus custom rates and delay.
+
+<img width="900" alt="Throttle presets" src="./docs/screenshots/throttle.png">
+
+### Proxy Settings
+
+Same options as upstream, restyled to match the rest of the app.
+
+<img width="470" alt="Proxy Settings" src="./docs/screenshots/proxy-settings.png">
+
+> Every request in these screenshots comes from a local demo server (`127.0.0.1:4399`); no real traffic is shown.
+
+### Known limitations
+
+- Breakpoints are a `reqDelay://`-based hold rather than a true interactive intercept-and-edit
+- The rules editor is a plain textarea with no whistle rule syntax highlighting; switch to the classic UI to edit rules there
 
 # Installation
 Please select the corresponding installation steps according to your operating system.
