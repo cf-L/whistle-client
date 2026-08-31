@@ -15,8 +15,24 @@ on:
         type: boolean
         default: false
 
+# electron-builder creates the draft release through the default token.
+permissions:
+  contents: write
+
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx eslint lib
+
   build:
+    needs: lint
     strategy:
       fail-fast: false
       # electron-builder creates the draft release on first upload; running the
@@ -50,8 +66,6 @@ jobs:
           sudo apt-get install -y libfuse2
 
       - run: npm ci
-
-      - run: npx eslint lib
 
       - name: Build installers
         env:

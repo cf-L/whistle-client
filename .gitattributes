@@ -1,0 +1,10 @@
+# The lint config enforces LF (airbnb's linebreak-style), so Windows checkouts
+# must not be converted to CRLF.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.icns binary
+*.ico binary
+*.ttf binary
+*.woff2 binary
