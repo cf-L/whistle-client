@@ -10,6 +10,7 @@ import * as pages from './pages.js';
 import * as composer from './composer.js';
 import * as sessions from './sessions.js';
 import * as filters from './filters.js';
+import * as find from './find.js';
 import * as online from './online.js';
 import { icons } from './icons.js';
 import { toast, initTooltips } from './ui.js';
@@ -216,9 +217,23 @@ const bindToolbar = () => {
   $$('#page-nav a').forEach((a) => a.addEventListener('click', () => showPage(a.dataset.page)));
 };
 
+// ⌘F means "filter the list" over the list and "search this body" over the
+// inspector, which is where the caret or the last click says the user is.
+const handleFind = () => {
+  const node = find.findTarget();
+  if (node && find.open(node)) {
+    return;
+  }
+  filters.focusInput();
+};
+
 // Escape reaches the page either as a key event or, when the shell's global
 // Escape shortcut grabbed it first, as an IPC message. Both land here.
 const handleEscape = () => {
+  if (find.isOpen()) {
+    find.close();
+    return;
+  }
   if (filters.isOpen()) {
     filters.hide();
     return;
@@ -228,6 +243,13 @@ const handleEscape = () => {
 
 const bindKeys = () => {
   document.addEventListener('keydown', (e) => {
+    // The in-pane find bar is the most recent surface, so Escape closes it
+    // before the list filter gets a say.
+    if ((e.key === 'Escape' || e.keyCode === 27) && find.isOpen()) {
+      e.preventDefault();
+      find.close();
+      return;
+    }
     if (filters.handleKey(e)) {
       e.preventDefault();
       return;
@@ -238,7 +260,7 @@ const bindKeys = () => {
       if (e.shiftKey) {
         $('#side-filter-input').focus();
       } else {
-        filters.focusInput();
+        handleFind();
       }
       return;
     }
@@ -351,7 +373,7 @@ const bindShellShortcuts = () => {
   try {
     // eslint-disable-next-line global-require
     const { ipcRenderer } = require('electron');
-    ipcRenderer.on('open-filter', () => filters.focusInput());
+    ipcRenderer.on('open-filter', () => handleFind());
     ipcRenderer.on('ui-escape', () => handleEscape());
   } catch (e) { /* plain browser */ }
 };
