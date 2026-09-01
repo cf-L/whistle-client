@@ -196,13 +196,9 @@ export const isOpen = () => {
 };
 
 // Filter-bar shortcuts mirror Proxyman's, but only while the bar has focus.
+// Escape is not one of them: the shell routes it by region, so that closing a
+// dialog does not also drop the filters underneath it.
 export const handleKey = (e) => {
-  // Escape closes an open filter bar even after focus moved to the request
-  // list. Other filter shortcuts remain scoped to controls inside the bar.
-  if ((e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27) && isOpen()) {
-    hide();
-    return true;
-  }
   const inBar = $('#filter-bar').contains(document.activeElement);
   if (!inBar) {
     return false;

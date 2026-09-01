@@ -14,6 +14,7 @@ import * as find from './find.js';
 import * as online from './online.js';
 import * as ctxmenu from './ctxmenu.js';
 import * as ruleTags from './rules.js';
+import * as region from './region.js';
 import { icons } from './icons.js';
 import { toast, initTooltips } from './ui.js';
 
@@ -220,11 +221,16 @@ const bindToolbar = () => {
 };
 
 // ⌘F acts on the region being worked in: over the inspector it searches the
-// open request or response, over the list it opens the URL filter.
+// open request or response, over the list it opens the URL filter. A dialog
+// has nothing to search, and answering with the filter behind it would be
+// worse than doing nothing.
 const handleFind = () => {
-  const inInspector = find.activeRegion() === 'inspector'
-    && document.querySelector('#detail-body .pane');
-  if (inInspector && find.open(find.findTarget())) {
+  const scope = region.current();
+  if (scope === 'modal') {
+    return;
+  }
+  if (scope === 'inspector' && document.querySelector('#detail-body .pane')
+    && find.open(find.findTarget())) {
     return;
   }
   filters.focusInput();
@@ -232,16 +238,36 @@ const handleFind = () => {
 
 // Escape reaches the page either as a key event or, when the shell's global
 // Escape shortcut grabbed it first, as an IPC message. Both land here.
+//
+// Overlays answer first, topmost one wins, because they sit above whatever the
+// user was working in. Below them the region decides, so Escape in a body pane
+// closes that pane's find bar and leaves the filters alone, and vice versa.
 const handleEscape = () => {
-  if (find.isOpen() && (find.activeRegion() === 'inspector' || !filters.isOpen())) {
+  if (ctxmenu.isOpen()) {
+    ctxmenu.close();
+    return;
+  }
+  if (region.isModalOpen()) {
+    $('#modal-root').textContent = '';
+    return;
+  }
+  const scope = region.current();
+  if (scope === 'inspector' && find.isOpen()) {
+    find.close();
+    return;
+  }
+  if (scope === 'filter' && filters.isOpen()) {
+    filters.hide();
+    return;
+  }
+  // Nothing owns the key in this region: fall back to whatever is still open.
+  if (find.isOpen()) {
     find.close();
     return;
   }
   if (filters.isOpen()) {
     filters.hide();
-    return;
   }
-  $('#modal-root').textContent = '';
 };
 
 // Chromium's own context menu offers a document-wide Select All, which hands
@@ -270,12 +296,11 @@ const bindInspectorMenu = () => {
 
 const bindKeys = () => {
   document.addEventListener('keydown', (e) => {
-    // Escape dismisses whatever belongs to the region being worked in, so
-    // leaving the filter open while reading a body (or vice versa) is fine.
-    if ((e.key === 'Escape' || e.keyCode === 27)
-      && find.isOpen() && find.activeRegion() === 'inspector') {
+    // Escape is routed by region, so it has to reach handleEscape before any
+    // one region can claim it.
+    if (e.key === 'Escape' || e.keyCode === 27) {
       e.preventDefault();
-      find.close();
+      handleEscape();
       return;
     }
     if (filters.handleKey(e)) {
@@ -311,7 +336,7 @@ const bindKeys = () => {
       $('#btn-record').click();
       return;
     }
-    if (inField) {
+    if (inField || region.isModalOpen()) {
       return;
     }
     if (e.key === 'ArrowDown') {
@@ -320,8 +345,6 @@ const bindKeys = () => {
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       list.moveSelection(-1);
-    } else if (e.key === 'Escape') {
-      handleEscape();
     }
   }, true);
 };

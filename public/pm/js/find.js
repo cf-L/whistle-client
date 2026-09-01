@@ -1,4 +1,5 @@
 import { el } from './util.js';
+import * as region from './region.js';
 
 // In-pane text search for the inspector. ⌘F over the request list filters the
 // list; over a response body people expect to search the body itself, which is
@@ -126,6 +127,15 @@ export const close = () => {
 
 export const isOpen = () => !!bar;
 
+const selectContents = (node) => {
+  const range = document.createRange();
+  range.selectNodeContents(node);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+  return true;
+};
+
 const build = () => {
   input = el('input', {
     class: 'find-input',
@@ -209,55 +219,22 @@ export const refresh = () => {
   }
 };
 
-// ⌘F belongs to whichever region the user is working in: the request list (URL
-// filter) or the inspector (search this body). Track the last one touched.
-let region = 'list';
-let lastNode = null;
-
-document.addEventListener('mousedown', (e) => {
-  const node = e.target;
-  if (!node || !node.closest) {
-    return;
-  }
-  if (node.closest('#detail')) {
-    region = 'inspector';
-    lastNode = node;
-  } else if (node.closest('#app')) {
-    region = 'list';
-  }
-}, true);
-
-// The click is authoritative: list rows are not focusable, so clicking one
-// while the find bar is open leaves focus inside the inspector and asking the
-// DOM where focus is would keep answering "inspector" forever.
-export const activeRegion = () => region;
-
 // Select-all scoped to what the user is reading: the pane under the caret or
-// the last click, rather than the whole document.
+// the last click, rather than the whole document. Inside a dialog it stays in
+// the dialog.
 export const selectAll = () => {
   const active = document.activeElement;
   if (active && /^(INPUT|TEXTAREA)$/.test(active.tagName)) {
     active.select();
     return true;
   }
-  const node = (active && active.closest && active.closest('#detail-body'))
-    || (lastNode && document.body.contains(lastNode) ? lastNode : null);
-  const scope = node && node.closest('.pane-scroll');
-  if (!scope) {
-    return false;
+  if (region.isModalOpen()) {
+    const body = document.querySelector('#modal-root .modal-body');
+    return body ? selectContents(body) : false;
   }
-  const range = document.createRange();
-  range.selectNodeContents(scope);
-  const selection = window.getSelection();
-  selection.removeAllRanges();
-  selection.addRange(range);
-  return true;
+  const node = region.lastInspectorNode();
+  const scope = node && node.closest('.pane-scroll');
+  return scope ? selectContents(scope) : false;
 };
 
-export const findTarget = () => {
-  const active = document.activeElement;
-  if (active && active.closest && active.closest('#detail-body')) {
-    return active;
-  }
-  return lastNode && document.body.contains(lastNode) ? lastNode : null;
-};
+export const findTarget = () => region.lastInspectorNode();

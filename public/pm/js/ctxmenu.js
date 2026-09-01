@@ -16,12 +16,9 @@ export const close = () => {
   }
 };
 
+export const isOpen = () => !!node;
+
 document.addEventListener('click', close);
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    close();
-  }
-});
 
 export const toCurl = (item) => {
   const headers = (item.req && item.req.headers) || {};
