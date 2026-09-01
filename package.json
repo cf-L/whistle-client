@@ -48,9 +48,6 @@
     ],
     "mac": {
       "icon": "public/dock.png",
-      "extendInfo": {
-        "LSUIElement": true
-      },
       "target": {
         "target": "dmg",
         "arch": [
