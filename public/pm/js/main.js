@@ -217,11 +217,11 @@ const bindToolbar = () => {
   $$('#page-nav a').forEach((a) => a.addEventListener('click', () => showPage(a.dataset.page)));
 };
 
-// ⌘F means "filter the list" over the list and "search this body" over the
-// inspector, which is where the caret or the last click says the user is.
+// With a request open, ⌘F means "search this body" - waiting for a click inside
+// the inspector first was too subtle, since people select a row and reach
+// straight for the shortcut. ⇧⌘F always opens the list filter.
 const handleFind = () => {
-  const node = find.findTarget();
-  if (node && find.open(node)) {
+  if (document.querySelector('#detail-body .pane') && find.open(find.findTarget())) {
     return;
   }
   filters.focusInput();
@@ -257,8 +257,10 @@ const bindKeys = () => {
     const inField = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {
       e.preventDefault();
-      if (e.shiftKey) {
+      if (e.altKey) {
         $('#side-filter-input').focus();
+      } else if (e.shiftKey) {
+        filters.focusInput();
       } else {
         handleFind();
       }
