@@ -12,6 +12,7 @@ import * as sessions from './sessions.js';
 import * as filters from './filters.js';
 import * as find from './find.js';
 import * as online from './online.js';
+import * as ruleTags from './rules.js';
 import { icons } from './icons.js';
 import { toast, initTooltips } from './ui.js';
 
@@ -398,6 +399,10 @@ const boot = () => {
     applyTheme('light');
   }
   list.init();
+  // Rule text is small and rarely changes, so a slow refresh is enough to keep
+  // the list badges honest.
+  ruleTags.refresh();
+  setInterval(() => ruleTags.refresh(), 5000);
   sidebar.init();
   bindSidebarResize();
   bindToolbar();

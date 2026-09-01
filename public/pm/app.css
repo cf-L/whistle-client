@@ -922,7 +922,31 @@ mark.find-hit-current {
 .okdot { background: var(--ok); }
 .errdot { background: var(--danger); }
 .pendingdot { background: var(--warn); }
-.cell-url { font-size: 12px; }
+.cell-url {
+  font-size: 12px; letter-spacing: .01em;
+  display: flex; align-items: center; gap: 6px;
+}
+/* Badges sit at the trailing edge so the URL text keeps one left edge down the
+   whole column; the text box shrinks and ellipsises instead of pushing them. */
+.cell-url .u-text {
+  flex: 1 1 auto; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.rule-tag {
+  flex: 0 0 auto; padding: 0 6px; border-radius: 999px;
+  font-family: var(--sans); font-size: 10px; font-weight: 600; line-height: 15px;
+  letter-spacing: .02em; white-space: nowrap;
+}
+.rule-map { background: rgba(217, 119, 87, .16); color: var(--brand-strong); }
+.rule-block { background: rgba(185, 59, 40, .16); color: var(--danger); }
+.rule-slow { background: rgba(139, 117, 28, .16); color: var(--warn); }
+.rule-proxy, .rule-host { background: rgba(60, 110, 190, .14); color: #2f6ab0; }
+.rule-edit { background: rgba(107, 79, 187, .14); color: #6b4fbb; }
+.rule-off, .rule-rule { background: var(--pill-bg); color: var(--pill-fg); }
+.cell-url .u-host { color: var(--fg-faint); }
+.cell-url .u-path { color: var(--fg); }
+.cell-url .u-query { color: var(--fg-faint); }
+.row.active .cell-url .u-path { font-weight: 600; }
 .cell-code, .cell-duration, .cell-size, .cell-index { font-variant-numeric: tabular-nums; }
 .row.pinned .cell-index::after { content: ' ●'; color: var(--accent); font-size: 8px; }
 

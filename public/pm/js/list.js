@@ -3,6 +3,7 @@ import {
   clientOf, statusText,
 } from './util.js';
 import * as store from './store.js';
+import * as rules from './rules.js';
 import * as ctxmenu from './ctxmenu.js';
 
 // Column set mirrors Proxyman's request table.
@@ -85,11 +86,37 @@ const rowClass = (item) => {
 const buildRow = (item, index) => {
   const row = el('div', { class: rowClass(item), dataset: { id: item.id } });
   COLUMNS.forEach((col) => {
-    const cell = col.key === 'state'
-      ? el('div', { class: 'cell cell-state' }, el('span', { class: `dot ${stateClass(item)}` }))
-      : el('div', { class: `cell cell-${col.key}`, text: cellValue(item, col.key, index) });
-    if (col.key === 'url') {
-      cell.title = item.url || '';
+    let cell;
+    if (col.key === 'state') {
+      cell = el('div', { class: 'cell cell-state' }, el('span', { class: `dot ${stateClass(item)}` }));
+    } else if (col.key === 'url') {
+      // Splitting host / path / query lets the eye land on the endpoint rather
+      // than reading one undifferentiated run of text. Tunnels arrive as bare
+      // "host:443" with nothing to split, so they stay as they are.
+      const raw = item.url || '';
+      const url = parseUrl(raw);
+      cell = el('div', { class: 'cell cell-url', title: raw });
+      // The URL lives in its own box so every row starts at the same x; badges
+      // are pushed to the trailing edge instead of shifting the text right.
+      const text = el('div', { class: 'u-text' });
+      if (url.protocol && url.pathname.startsWith('/')) {
+        text.appendChild(el('span', { class: 'u-host', text: `${url.protocol}://${url.host}` }));
+        text.appendChild(el('span', { class: 'u-path', text: url.pathname }));
+        if (url.search) {
+          text.appendChild(el('span', { class: 'u-query', text: url.search }));
+        }
+      } else {
+        text.textContent = raw;
+      }
+      cell.appendChild(text);
+      // Badge whatever the enabled rules do to this request (map, block, ...).
+      rules.matches(raw).forEach((tag) => cell.appendChild(el('span', {
+        class: `rule-tag rule-${tag.kind}`,
+        text: tag.label,
+        title: tag.line,
+      })));
+    } else {
+      cell = el('div', { class: `cell cell-${col.key}`, text: cellValue(item, col.key, index) });
     }
     if (col.width) {
       cell.style.flex = `0 0 ${col.width}px`;
