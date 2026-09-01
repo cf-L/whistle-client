@@ -101,7 +101,9 @@ html, body {
 .mono { font-family: var(--mono); }
 .spacer { height: 12px; }
 
-#app { display: flex; height: 100%; padding: 8px; gap: 8px; }
+/* Flush shell: the sidebar meets the window edge and is separated from the
+   content by a hairline, the way Claude Desktop does it. */
+#app { display: flex; height: 100%; }
 .content { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
 
 
@@ -197,9 +199,7 @@ body.sidebar-collapsed.frameless-mac .topbar { padding-left: 78px; }
   flex-direction: column;
   padding: 0 6px 6px;
   background: var(--bg-panel);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-float);
+  border-right: 1px solid var(--border-soft);
   overflow: hidden;
 }
 .sidebar-resizer {
