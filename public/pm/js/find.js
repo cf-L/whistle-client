@@ -232,6 +232,28 @@ document.addEventListener('mousedown', (e) => {
 // DOM where focus is would keep answering "inspector" forever.
 export const activeRegion = () => region;
 
+// Select-all scoped to what the user is reading: the pane under the caret or
+// the last click, rather than the whole document.
+export const selectAll = () => {
+  const active = document.activeElement;
+  if (active && /^(INPUT|TEXTAREA)$/.test(active.tagName)) {
+    active.select();
+    return true;
+  }
+  const node = (active && active.closest && active.closest('#detail-body'))
+    || (lastNode && document.body.contains(lastNode) ? lastNode : null);
+  const scope = node && node.closest('.pane-scroll');
+  if (!scope) {
+    return false;
+  }
+  const range = document.createRange();
+  range.selectNodeContents(scope);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+  return true;
+};
+
 export const findTarget = () => {
   const active = document.activeElement;
   if (active && active.closest && active.closest('#detail-body')) {

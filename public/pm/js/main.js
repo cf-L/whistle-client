@@ -1,5 +1,5 @@
 import {
-  $, $$, el, formatSize,
+  $, $$, el, formatSize, copyText,
 } from './util.js';
 import * as store from './store.js';
 import * as list from './list.js';
@@ -12,6 +12,7 @@ import * as sessions from './sessions.js';
 import * as filters from './filters.js';
 import * as find from './find.js';
 import * as online from './online.js';
+import * as ctxmenu from './ctxmenu.js';
 import * as ruleTags from './rules.js';
 import { icons } from './icons.js';
 import { toast, initTooltips } from './ui.js';
@@ -243,6 +244,30 @@ const handleEscape = () => {
   $('#modal-root').textContent = '';
 };
 
+// Chromium's own context menu offers a document-wide Select All, which hands
+// back the whole chrome as text. Own the menu inside the inspector instead.
+const bindInspectorMenu = () => {
+  $('#detail-body').addEventListener('contextmenu', (e) => {
+    const scope = e.target.closest && e.target.closest('.pane-scroll');
+    if (!scope) {
+      return;
+    }
+    const selection = String(window.getSelection() || '');
+    ctxmenu.openMenu(e, [
+      ['Copy', async () => {
+        const ok = await copyText(selection);
+        toast(ok ? 'Copied' : 'Nothing selected');
+      }],
+      ['Select All', () => find.selectAll()],
+      ['-'],
+      ['Copy this pane', async () => {
+        const ok = await copyText(scope.innerText);
+        toast(ok ? 'Pane copied' : 'Could not copy');
+      }],
+    ]);
+  });
+};
+
 const bindKeys = () => {
   document.addEventListener('keydown', (e) => {
     // Escape dismisses whatever belongs to the region being worked in, so
@@ -265,6 +290,10 @@ const bindKeys = () => {
       } else {
         handleFind();
       }
+      return;
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a' && find.selectAll()) {
+      e.preventDefault();
       return;
     }
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -378,6 +407,11 @@ const bindShellShortcuts = () => {
     const { ipcRenderer } = require('electron');
     ipcRenderer.on('open-filter', () => handleFind());
     ipcRenderer.on('ui-escape', () => handleEscape());
+    ipcRenderer.on('ui-select-all', () => {
+      if (!find.selectAll()) {
+        document.execCommand('selectAll');
+      }
+    });
   } catch (e) { /* plain browser */ }
 };
 
@@ -407,6 +441,7 @@ const boot = () => {
   bindSidebarResize();
   bindToolbar();
   bindKeys();
+  bindInspectorMenu();
   bindSplitter();
   renderChips();
   // Restore the inspector dock after the list exists: setDock repaints it.

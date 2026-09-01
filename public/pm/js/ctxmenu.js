@@ -76,6 +76,26 @@ const copyResponseBody = async (item) => {
   return copy(decodeBody(response.body, response.base64));
 };
 
+// Generic menu, used where there is no session behind the click (a body pane).
+export const openMenu = (event, actions) => {
+  event.preventDefault();
+  close();
+  node = el('div', { class: 'ctx-menu' }, actions.map(([label, fn]) => (label === '-'
+    ? el('div', { class: 'ctx-sep' })
+    : el('div', {
+      class: 'ctx-item',
+      text: label,
+      onclick: () => {
+        close();
+        fn();
+      },
+    }))));
+  document.body.appendChild(node);
+  const box = node.getBoundingClientRect();
+  node.style.left = `${Math.min(event.clientX, window.innerWidth - box.width - 8)}px`;
+  node.style.top = `${Math.min(event.clientY, window.innerHeight - box.height - 8)}px`;
+};
+
 export const open = (event, item) => {
   event.preventDefault();
   close();
