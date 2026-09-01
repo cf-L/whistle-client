@@ -709,16 +709,18 @@ const renderUrlBar = (item) => {
   // A long URL is mostly query string. Give the eye something to land on: the
   // last path segment is what identifies the request, so it stays prominent
   // while the directory and the parameters recede.
+  // Tunnels arrive as a bare "host:443" with no protocol or path to split.
+  const structured = url.protocol && url.pathname.startsWith('/');
   const segments = url.pathname.split('/');
   const last = segments.pop() || '';
   const dir = segments.join('/') + (last ? '/' : '');
-  const parts = [
+  const parts = structured ? [
     el('span', { class: 'url-origin', text: `${url.protocol}://` }),
     el('span', { class: 'url-host', text: url.host }),
     dir ? el('span', { class: 'url-dir', text: dir }) : null,
     last ? el('span', { class: 'url-leaf', text: last }) : null,
-  ];
-  if (url.search) {
+  ] : [el('span', { class: 'url-host', text: item.url })];
+  if (structured && url.search) {
     // One span per parameter so wrapping breaks between them, not mid-token.
     const query = el('span', { class: 'url-query' });
     url.search.slice(1).split('&').forEach((pair, i) => {
