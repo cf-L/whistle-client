@@ -691,6 +691,10 @@ mark.find-hit-current {
 .tool-head { color: var(--fg-faint); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
 .tool-td { flex: 1 1 0; min-width: 0; }
 .tool-td.tool-op { flex: 0 0 32px; text-align: center; }
+.tool-td.tool-on { flex: 0 0 30px; text-align: center; }
+.tool-check { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; vertical-align: middle; }
+/* An unticked row is kept, not deleted, so it reads as parked rather than gone. */
+.tool-tr.off .tool-input, .tool-tr.off .pick-btn { opacity: .45; }
 .tool-td-pick { display: flex; align-items: center; gap: 6px; }
 .tool-td-pick .tool-input { flex: 1 1 auto; min-width: 0; }
 .pick-btn {

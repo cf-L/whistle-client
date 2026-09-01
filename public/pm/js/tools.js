@@ -57,12 +57,17 @@ const writeBlock = async (id, content) => {
   toast('Rules updated');
 };
 
+// A row the user unticked stays in the block as a comment so the entry is
+// remembered, while whistle (and the list badges) ignore it like any comment.
+const OFF = '#off ';
+
 const parseRows = (id, fields) => readBlock(id).split('\n')
   .map((line) => line.trim())
-  .filter((line) => line && !line.startsWith('#'))
-  .map((line) => {
-    const parts = line.split(/\s+/);
-    const row = {};
+  .filter((line) => line && (!line.startsWith('#') || line.startsWith(OFF)))
+  .map((raw) => {
+    const enabled = !raw.startsWith(OFF);
+    const parts = (enabled ? raw : raw.slice(OFF.length).trim()).split(/\s+/);
+    const row = { enabled };
     fields.forEach((f, i) => {
       row[f] = parts[i] || '';
     });
@@ -79,6 +84,7 @@ const tableEditor = ({
   const draw = () => {
     table.textContent = '';
     table.appendChild(el('div', { class: 'tool-tr tool-head' }, [
+      el('div', { class: 'tool-td tool-on', text: 'On' }),
       ...columns.map((c) => el('div', { class: 'tool-td', text: c.label })),
       el('div', { class: 'tool-td tool-op' }),
     ]));
@@ -109,7 +115,18 @@ const tableEditor = ({
           }, icon('folder')),
         ]);
       };
-      table.appendChild(el('div', { class: 'tool-tr' }, [
+      const toggle = el('input', {
+        class: 'tool-check',
+        type: 'checkbox',
+        title: 'Enable this rule',
+        onchange: (e) => {
+          row.enabled = e.target.checked;
+          e.target.closest('.tool-tr').classList.toggle('off', !row.enabled);
+        },
+      });
+      toggle.checked = row.enabled !== false;
+      table.appendChild(el('div', { class: `tool-tr${row.enabled === false ? ' off' : ''}` }, [
+        el('div', { class: 'tool-td tool-on' }, toggle),
         ...columns.map(cellFor),
         el('div', { class: 'tool-td tool-op' }, el('button', {
           class: 'link-btn danger',
@@ -139,13 +156,20 @@ const tableEditor = ({
     node: table,
     save: () => {
       if (validate) {
-        const problem = data.map(validate).find(Boolean);
+        const problem = data.filter((row) => row.enabled !== false).map(validate).find(Boolean);
         if (problem) {
           toast(problem);
           throw new Error(problem);
         }
       }
-      return writeBlock(id, data.map(toLine).filter(Boolean).join('\n'));
+      const lines = data.map((row) => {
+        const line = toLine(row);
+        if (!line) {
+          return '';
+        }
+        return row.enabled === false ? `${OFF}${line}` : line;
+      });
+      return writeBlock(id, lines.filter(Boolean).join('\n'));
     },
   };
 };
@@ -211,6 +235,7 @@ const mapLocal = async (initialPattern = '') => {
     return null;
   };
   const rows = parseRows('map-local', ['pattern', 'file']).map((r) => ({
+    enabled: r.enabled,
     pattern: r.pattern,
     file: (r.file || '').replace(/^x?file:\/\//, ''),
   }));
@@ -306,6 +331,7 @@ const throttle = async () => {
       }
     });
     return {
+      enabled: r.enabled,
       pattern: r.pattern,
       up: opts.reqSpeed || '',
       down: opts.resSpeed || '',
@@ -404,6 +430,7 @@ const block = async () => {
       { key: 'status', label: 'Status code', placeholder: '403' },
     ],
     rows: parseRows('block', ['pattern', 'status']).map((r) => ({
+      enabled: r.enabled,
       pattern: r.pattern,
       status: (r.status || '').replace('statusCode://', ''),
     })),
@@ -463,6 +490,7 @@ const breakpoint = async () => {
       { key: 'ms', label: 'Hold request (ms)', placeholder: '5000' },
     ],
     rows: parseRows('breakpoint', ['pattern', 'ms']).map((r) => ({
+      enabled: r.enabled,
       pattern: r.pattern,
       ms: (r.ms || '').replace('reqDelay://', ''),
     })),
