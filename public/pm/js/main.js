@@ -217,11 +217,12 @@ const bindToolbar = () => {
   $$('#page-nav a').forEach((a) => a.addEventListener('click', () => showPage(a.dataset.page)));
 };
 
-// With a request open, ⌘F means "search this body" - waiting for a click inside
-// the inspector first was too subtle, since people select a row and reach
-// straight for the shortcut. ⇧⌘F always opens the list filter.
+// ⌘F acts on the region being worked in: over the inspector it searches the
+// open request or response, over the list it opens the URL filter.
 const handleFind = () => {
-  if (document.querySelector('#detail-body .pane') && find.open(find.findTarget())) {
+  const inInspector = find.activeRegion() === 'inspector'
+    && document.querySelector('#detail-body .pane');
+  if (inInspector && find.open(find.findTarget())) {
     return;
   }
   filters.focusInput();
@@ -230,7 +231,7 @@ const handleFind = () => {
 // Escape reaches the page either as a key event or, when the shell's global
 // Escape shortcut grabbed it first, as an IPC message. Both land here.
 const handleEscape = () => {
-  if (find.isOpen()) {
+  if (find.isOpen() && (find.activeRegion() === 'inspector' || !filters.isOpen())) {
     find.close();
     return;
   }
@@ -243,9 +244,10 @@ const handleEscape = () => {
 
 const bindKeys = () => {
   document.addEventListener('keydown', (e) => {
-    // The in-pane find bar is the most recent surface, so Escape closes it
-    // before the list filter gets a say.
-    if ((e.key === 'Escape' || e.keyCode === 27) && find.isOpen()) {
+    // Escape dismisses whatever belongs to the region being worked in, so
+    // leaving the filter open while reading a body (or vice versa) is fine.
+    if ((e.key === 'Escape' || e.keyCode === 27)
+      && find.isOpen() && find.activeRegion() === 'inspector') {
       e.preventDefault();
       find.close();
       return;
@@ -257,10 +259,8 @@ const bindKeys = () => {
     const inField = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {
       e.preventDefault();
-      if (e.altKey) {
+      if (e.shiftKey) {
         $('#side-filter-input').focus();
-      } else if (e.shiftKey) {
-        filters.focusInput();
       } else {
         handleFind();
       }

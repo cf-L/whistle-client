@@ -209,22 +209,33 @@ export const refresh = () => {
   }
 };
 
-// Which node the next ⌘F applies to: the caret if it sits in the inspector,
-// otherwise the last thing clicked there.
-let lastClick = null;
+// ⌘F belongs to whichever region the user is working in: the request list (URL
+// filter) or the inspector (search this body). Track the last one touched.
+let region = 'list';
+let lastNode = null;
+
 document.addEventListener('mousedown', (e) => {
   const node = e.target;
-  if (node && node.closest && node.closest('#detail-body')) {
-    lastClick = node;
+  if (!node || !node.closest) {
+    return;
+  }
+  if (node.closest('#detail')) {
+    region = 'inspector';
+    lastNode = node;
+  } else if (node.closest('#app')) {
+    region = 'list';
   }
 }, true);
+
+// The click is authoritative: list rows are not focusable, so clicking one
+// while the find bar is open leaves focus inside the inspector and asking the
+// DOM where focus is would keep answering "inspector" forever.
+export const activeRegion = () => region;
 
 export const findTarget = () => {
   const active = document.activeElement;
   if (active && active.closest && active.closest('#detail-body')) {
     return active;
   }
-  return lastClick && document.body.contains(lastClick) ? lastClick : null;
+  return lastNode && document.body.contains(lastNode) ? lastNode : null;
 };
-
-export const inInspector = () => !!findTarget() || isOpen();
