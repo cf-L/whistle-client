@@ -924,20 +924,20 @@ mark.find-hit-current {
 
 /* url bar above the inspector */
 .url-bar {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: flex-start; gap: 10px;
   padding: 9px 12px;
   border-bottom: 1px solid var(--border-soft);
   flex: 0 0 auto; overflow: hidden;
 }
 .url-bar:empty { display: none; }
 .method-pill {
-  flex: 0 0 auto; white-space: nowrap;
+  flex: 0 0 auto; white-space: nowrap; margin-top: 1px;
   padding: 3px 12px; border-radius: 999px;
   background: var(--pill-bg); color: var(--pill-fg);
   font-size: 11.5px; font-weight: 700; letter-spacing: .03em;
 }
 .code-pill {
-  flex: 0 0 auto; white-space: nowrap;
+  flex: 0 0 auto; white-space: nowrap; margin-top: 1px;
   padding: 3px 12px; border-radius: 999px;
   background: rgba(63, 143, 95, .16); color: var(--ok);
   font-size: 11.5px; font-weight: 700;
@@ -947,11 +947,21 @@ mark.find-hit-current {
 .url-text {
   flex: 1 1 auto; min-width: 0;
   font-family: var(--mono); font-size: 12.5px;
-  white-space: normal; overflow-wrap: anywhere; word-break: break-word;
+  line-height: 1.55; letter-spacing: .01em;
+  cursor: pointer;
+  /* Long URLs are mostly query string: show two lines, expand on click. */
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  overflow: hidden; overflow-wrap: anywhere;
 }
+.url-text.expanded { -webkit-line-clamp: unset; max-height: 40vh; overflow-y: auto; }
 .url-origin { color: var(--fg-faint); }
 .url-host { color: var(--brand-strong); }
-.url-path { color: var(--fg); }
+.url-dir { color: var(--fg-dim); }
+.url-leaf { color: var(--fg); font-weight: 600; }
+.url-query { color: var(--fg-faint); }
+/* Each parameter is its own box so wrapping breaks between them. */
+.url-param { display: inline-block; overflow-wrap: anywhere; }
+.url-copy { flex: 0 0 auto; align-self: flex-start; }
 
 /* inspector panes */
 /* ------------------------------------------- split request/response panes */

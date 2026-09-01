@@ -4,6 +4,7 @@ import {
 import * as store from './store.js';
 import * as api from './api.js';
 import { toast } from './ui.js';
+import { icon } from './icons.js';
 
 const REQ_TABS = ['Header', 'Query', 'Body', 'Raw', 'Summary'];
 const RES_TABS = ['Header', 'JSON Text', 'JSON View', 'Raw', 'Hex', 'Preview', 'Timeline', 'Rules', 'Frames'];
@@ -704,12 +705,44 @@ const renderUrlBar = (item) => {
     class: `code-pill${code && code >= 400 ? ' bad' : ''}${code ? '' : ' idle'}`,
     text: code ? `${code} ${(item.res && item.res.statusMessage) || ''}`.trim() : 'Pending',
   }));
-  bar.appendChild(el('span', { class: 'url-text' }, [
+
+  // A long URL is mostly query string. Give the eye something to land on: the
+  // last path segment is what identifies the request, so it stays prominent
+  // while the directory and the parameters recede.
+  const segments = url.pathname.split('/');
+  const last = segments.pop() || '';
+  const dir = segments.join('/') + (last ? '/' : '');
+  const parts = [
     el('span', { class: 'url-origin', text: `${url.protocol}://` }),
     el('span', { class: 'url-host', text: url.host }),
-    el('span', { class: 'url-path', text: url.path }),
-  ]));
+    dir ? el('span', { class: 'url-dir', text: dir }) : null,
+    last ? el('span', { class: 'url-leaf', text: last }) : null,
+  ];
+  if (url.search) {
+    // One span per parameter so wrapping breaks between them, not mid-token.
+    const query = el('span', { class: 'url-query' });
+    url.search.slice(1).split('&').forEach((pair, i) => {
+      query.appendChild(el('span', { class: 'url-param', text: `${i ? '&' : '?'}${pair}` }));
+    });
+    parts.push(query);
+  }
+
+  const text = el('span', {
+    class: 'url-text',
+    title: item.url,
+    onclick: () => text.classList.toggle('expanded'),
+  }, parts);
+  bar.appendChild(text);
+  bar.appendChild(el('button', {
+    class: 'icon-btn url-copy',
+    title: 'Copy URL',
+    onclick: async () => {
+      const ok = await copyText(item.url);
+      toast(ok ? 'URL copied' : 'Could not copy');
+    },
+  }, icon('copy')));
 };
+
 
 export const render = () => {
   const item = store.selected();

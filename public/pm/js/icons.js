@@ -7,6 +7,7 @@ const svg = (paths, opts = {}) => `<svg viewBox="0 0 24 24" fill="none" stroke="
 export const icons = {
   record: svg('<circle cx="12" cy="12" r="6.5" fill="currentColor" stroke="none"/>'),
   pause: svg('<rect x="8" y="6" width="3" height="12" rx="1.2"/><rect x="13" y="6" width="3" height="12" rx="1.2"/>'),
+  copy: svg('<rect x="9" y="9" width="11" height="11" rx="2.2"/><path d="M15 9V6.2A2.2 2.2 0 0 0 12.8 4H6.2A2.2 2.2 0 0 0 4 6.2v6.6A2.2 2.2 0 0 0 6.2 15H9"/>'),
   clear: svg('<path d="M4 7h16"/><path d="M9.5 7V5.5A1.5 1.5 0 0 1 11 4h2a1.5 1.5 0 0 1 1.5 1.5V7"/><path d="M6.5 7l.8 11.2A2 2 0 0 0 9.3 20h5.4a2 2 0 0 0 2-1.8L17.5 7"/>'),
   replay: svg('<path d="M20 11a8 8 0 1 0-2.3 6.4"/><path d="M20 5v6h-6"/>'),
   compose: svg('<path d="M4 20h16"/><path d="M14.5 4.5a2.1 2.1 0 0 1 3 3L8.6 16.4 4.8 17.6l1.2-3.8z"/>'),
