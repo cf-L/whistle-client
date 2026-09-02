@@ -3,298 +3,332 @@
 [中文](./README.md) · English
 
 > **This repository is a fork of [avwo/whistle-client](https://github.com/avwo/whistle-client).**
-> Everything upstream still works the same; this fork adds a Proxyman-style modern UI on top of it (see [Modern UI](#modern-ui-added-by-this-fork) below). Report upstream bugs upstream, UI bugs here.
+> Everything upstream does still works; this fork rebuilds the interface on top of it. File upstream bugs upstream, UI bugs here.
 
+[Whistle](https://github.com/avwo/whistle) is a cross-platform web debugging proxy. This repository is its desktop client, for:
 
-[Whistle](https://github.com/avwo/whistle) is a powerful cross-platform network packet capture and debugging tool. This repository is a fork of its official desktop client and supports the following operating systems:
-- macOS（Apple Silicon / Intel）
+- macOS (Apple Silicon / Intel)
 - Windows
-- Linux（Fedora / Ubuntu）
+- Linux (Fedora / Ubuntu)
 
-> If the system you are using does not support the Whistle Client (such as a server without a graphical interface or a special device), you can use the Whistle: https://github.com/avwo/whistle
+whistle's own rule syntax, plugin system and so on are documented at https://wproxy.org/docs/getting-started.html
 
-# Modern UI (added by this fork)
+> On a headless server or a device without a desktop, use the command-line whistle instead: https://github.com/avwo/whistle
 
-A self-contained capture UI mounted on whistle's own web server through its `uiMiddleware` hook (at `/pm`), so it shares an origin with `/cgi-bin` and keeps the plugin iframe contract intact. The upstream classic UI is still there and one menu item away.
-
-- Enabled by default; uncheck `Whistle` menu → `Modern UI` to go back to the classic one
-- Visually aligned with Claude Desktop: floating sidebar, rounded corners, matching palette. When Claude Desktop is installed the UI uses its Anthropic Sans; otherwise it falls back to the system face (no font file is copied into this repo)
-
-### Request list and inspector
-
-A Proxyman-style column table (ID / URL / Client / Method / Status / Code / Time / Duration / Size) with sorting, a context menu, and Pinned / Saved marks. The inspector splits request on the left and response on the right.
-
-<img width="900" alt="Request list and inspector" src="./docs/screenshots/main-inspector.png">
-
-### Stacked filters (⌘F)
-
-`⌘F` opens the filter panel. Stack as many conditions as you like — each picks a field (URL / Host / Path / Method / Status / Headers / Body / Type) and a match (contains / not contains / equals / regex) — combined with AND or OR, and saveable. `ESC` leaves filter mode.
-
-<img width="900" alt="Stacked filters" src="./docs/screenshots/filters.png">
-
-### Dark mode and inspector docking
-
-The two buttons at the top right dock the inspector at the bottom or on the right; clicking the active one hides it. Both the dock position and the theme are remembered. Response bodies render as JSON Text (highlighted source with line numbers), JSON View (collapsible tree with key/value filtering and one-click copy), Raw, Hex, or Preview.
-
-<img width="900" alt="Dark mode with the inspector docked right" src="./docs/screenshots/dark-dock-right.png">
-
-### Map Local
-
-Accepts URLs, wildcards, `/regex/`, and Proxyman-style bare regex; the local file is picked through the native file dialog.
-
-<img width="900" alt="Map Local" src="./docs/screenshots/map-local.png">
-
-### Throttle
-
-Presets are Apple's Network Link Conditioner profiles (Wi-Fi / LTE / 3G / DSL / Edge / High Latency DNS / Very Bad Network / 100% Loss), plus custom rates and delay.
-
-<img width="900" alt="Throttle presets" src="./docs/screenshots/throttle.png">
-
-### HTTPS certificate and mobile devices
-
-Capturing HTTPS from a phone or tablet needs three things: the device's proxy pointed at this machine, whistle's root certificate installed **and trusted** on the device, and HTTPS decryption switched on here. One dialog covers all three.
-
-**Where**: `Tools → HTTPS Certificate` in the sidebar. The `Online` dialog also links to it with "Set up HTTPS on another device →".
-
-<img width="260" alt="The HTTPS Certificate entry under Tools" src="./docs/screenshots/tools-entry.png">
-
-<img width="900" alt="HTTPS certificate and mobile setup" src="./docs/screenshots/https-certificate.png">
-
-#### Steps
-
-1. **Turn on decryption**: tick `Decrypt HTTPS traffic` at the top of the dialog (whistle's `Capture HTTPS CONNECTs`). Without it HTTPS only shows up as `CONNECT` tunnels with no visible content.
-
-2. **Put the device on the same Wi-Fi**, then point its proxy at the address from step 1 of the dialog (something like `192.168.1.23:8899`). With several interfaces, use the dropdown to pick the one the device can reach.
-   - iOS: `Settings → Wi-Fi → ⓘ next to the network → Configure Proxy → Manual`, server and port copied from the address in the dialog
-   - Android: long-press the network → `Modify network → Advanced → Proxy → Manual`, the same IP and port from the dialog
-
-3. **Install the certificate**: scan the QR code with the device camera, or open the URL from step 2 by hand.
-   - iOS: Safari says the profile was downloaded — install it under `Settings → General → VPN & Device Management`
-   - Android: after downloading, go to `Settings → Security → Encryption & credentials → Install a certificate → CA certificate` and pick the file
-
-4. **iOS needs one more trust step**: `Settings → General → About → Certificate Trust Settings`, then enable the whistle entry. Installing without trusting leaves HTTPS broken — this is the step people miss.
-
-5. **Verify**: open any https site on the device. Its requests should appear in the list with a `200` code rather than `CONNECT`, and the decrypted body should be readable in the Response pane.
-
-This computer does not need that flow: click `Download root certificate` in the dialog, or use `Whistle` menu → `Install Root CA` to install and trust it in one step.
-
-> The link inside the QR code carries this session's access token (without it the device is stopped by whistle's auth), so only hand it to your own devices. The code is generated locally — see [`public/pm/js/qrcode.js`](./public/pm/js/qrcode.js), no third-party dependency.
-
-#### If nothing shows up
-
-- **Only `CONNECT` tunnels, no individual requests**: `Decrypt HTTPS traffic` is off, or the host sits in the `SSL Proxying` exclusion list
-- **The device says the certificate is not trusted**: on iOS, step 4 was skipped; on Android 9+, apps do not trust user-installed CAs unless they ship a `networkSecurityConfig` or you use a debug build — the system browser is unaffected
-- **The device cannot reach the proxy**: use the LAN IP rather than the hostname (devices usually cannot resolve it), and check both are on the same subnet and that the firewall allows that port
-- **A specific app shows no traffic**: it most likely pins its certificate; use a test build or let it through in `SSL Proxying`
-
-### Proxy Settings
-
-Same options as upstream, restyled to match the rest of the app.
-
-<img width="470" alt="Proxy Settings" src="./docs/screenshots/proxy-settings.png">
-
-> Every request in these screenshots comes from a local demo server (`127.0.0.1:4399`); no real traffic is shown.
-
-### Known limitations
-
-- Breakpoints are a `reqDelay://`-based hold rather than a true interactive intercept-and-edit
-- The rules editor is a plain textarea with no whistle rule syntax highlighting; switch to the classic UI to edit rules there
-
-# Installation
-Please select the corresponding installation steps according to your operating system.
+## Installation
 
 <details>
   <summary>macOS</summary>
 
-##### 1. Select the correct installation package
+**1. Pick the right package**
 
-Select the corresponding version according to your Mac processor type:
-- Apple Silicon chip (M1/M2/M3 series) → Download ARM 64-bit version: [Whistle-vx.y.z-mac-arm64.dmg](https://github.com/cf-L/whistle-client/releases)
-- Intel/AMD chip → Download x86_64 version: [Whistle-vx.y.z-mac-x64.dmg](https://github.com/cf-L/whistle-client/releases)
+- Apple Silicon (M series) → [Whistle-vx.y.z-mac-arm64.dmg](https://github.com/cf-L/whistle-client/releases)
+- Intel → [Whistle-vx.y.z-mac-x64.dmg](https://github.com/cf-L/whistle-client/releases)
 
-##### 2. Installation steps
+**2. Install**
 
-1. After downloading, double-click the downloaded `.dmg` file
+Open the `.dmg` and drag Whistle into Applications.
 
-2. Drag the Whistle icon to the Applications folder
+<img width="520" alt="install mac client" src="https://github.com/user-attachments/assets/ef60276a-520c-4f4c-8612-10bdac2df30a" />
 
-    <img width="520" alt="install mac client" src="https://github.com/user-attachments/assets/ef60276a-520c-4f4c-8612-10bdac2df30a" />
-3. If the following situations occur:
+If it says the app already exists, choose replace; if it cannot replace, quit the running client first.
 
-   - "Application already exists" → Select "Overwrite"
+**3. First launch**
 
-   - Unable to overwrite → Please exit the running Whistle client first
+This fork's packages are **not signed or notarised**, so macOS refuses to verify the developer. Either:
 
-##### 3. Security Tips
+- right-click Whistle in Finder → Open → Open, or
+- run:
 
-This fork's installers are **not code-signed or notarized**, so macOS refuses them on first launch. Either:
-- right-click Whistle in Finder → Open → Open again, or
-- run `xattr -dr com.apple.quarantine /Applications/Whistle.app`
+  ```bash
+  xattr -dr com.apple.quarantine /Applications/Whistle.app
+  ```
 
-Some enterprise security software may give false positives. Suggestions:
-
-- Select "Allow" when running for the first time
-
-- If there is continuous interception, please contact the IT department to add Whistle to the whitelist
+Some corporate security tools flag it. Allow it on first run, and ask IT to whitelist Whistle if it keeps being blocked.
 
 </details>
 
 <details>
   <summary>Windows</summary>
 
-##### 1. Download the installation package
+**1. Pick the right package**
 
-Choose the appropriate version according to your permission requirements:
+- (Recommended) Standard, needs administrator rights: [Whistle-vx.y.z-win-x64.exe](https://github.com/cf-L/whistle-client/releases) — full features, including the `whistle://client` protocol
+- Per-user, no administrator rights: [Whistle-user-installer-vx.y.z-win-x64.exe](https://github.com/cf-L/whistle-client/releases) — no protocol handler
 
-- [Recommended] Standard Edition (Administrator permissions required): [Whistle-vx.y.z-win-x64.exe](https://github.com/cf-L/whistle-client/releases)
-    > Supports full functionality, including pseudo-protocols (whistle://client)
-- User version (no administrator privileges required): [Whistle-user-installer-vx.y.z-win-x64.exe](https://github.com/cf-L/whistle-client/releases)
-    > Functional limitations: pseudo-protocol calls are not supported
+**2. Install**
 
-##### 2. Run the installer
+Run the installer, accept the User Account Control prompt, then follow the wizard.
 
-After double-clicking the downloaded installation package, you may see the following security prompts. Please follow the instructions in order:
-
-1. User Account Control prompt → Click "Yes" to continue the installation
-
-  <img width="360" alt="Image" src="https://github.com/user-attachments/assets/c4e78f37-13f3-4d39-bf22-9ee8645178a3" />
-2. Installation wizard interface → Follow the prompts to complete step by step
+<img width="360" alt="UAC" src="https://github.com/avwo/whistle/assets/11450939/1b496557-6d3e-4966-a8a4-bd16ed643e28">
 
 </details>
 
 <details>
-  <summary>Linux (Fedora/Ubuntu)</summary>
+  <summary>Linux (Fedora / Ubuntu)</summary>
 
-This client currently supports two Linux distributions: Fedora and Ubuntu.
+- Intel/AMD 64-bit: [Whistle-vx.y.z-linux-x86_64.AppImage](https://github.com/cf-L/whistle-client/releases)
+- ARM 64-bit: [Whistle-vx.y.z-linux-arm64.AppImage](https://github.com/cf-L/whistle-client/releases)
 
-Download the installation package:
-- Intel/AMD 64-bit (x86_64): [Whistle-vx.y.z-linux-x86_64.AppImage](https://github.com/cf-L/whistle-client/releases)
-- ARM 64-bit (arm64): [Whistle-vx.y.z-linux-arm64.AppImage](https://github.com/cf-L/whistle-client/releases)
+For how to run an AppImage, see https://docs.appimage.org/introduction/quickstart.html
 
-Installation method reference: https://itsfoss.com/cant-run-appimage-ubuntu/
 </details>
 
-# Usage
+### First run
 
-### Start the client
-After installation, please start it in the following way:
-1. Click the Whistle icon on the desktop
-2. Or find Whistle through the system application menu
+Two things get you capturing:
 
-After starting, please follow the steps below to complete the necessary initial settings (must be done when running for the first time):
-1. Open the `Whistle` menu item at the top of the client
-2. Click `Install Root CA`: Install the system root certificate for parsing HTTPS Request
-3. Enable `Set As System Proxy`: Set the system proxy to capture the system's web requests
+1. `Whistle` menu → `Install Root CA`: installs and trusts the root certificate, so HTTPS from this machine can be decrypted
+2. `Whistle` menu → tick `Set As System Proxy`: points the system proxy at the client, so this machine's requests come through
 
-### Top menu
+Phones and tablets need a different flow — see [Capturing HTTPS from a phone](#capturing-https-from-a-phone).
 
-<img width="277" alt="Image" src="https://github.com/user-attachments/assets/ae22a3c9-ecda-4643-a4d5-de5c7173a828" />
+## The interface
 
-1. `Proxy Settings`: See Proxy Settings below
-2. `Install Root CA`: Install the root certificate
-3. `Check Update`: Check if there is a new version
-4. `Set As System Proxy`: Set the system proxy
-5. `Start At Login`: Whether to automatically start the Whistle client at startup
-6. `Restart`: Restart the client
-7. `Quit`: Exit the client
+The client ships with this fork's own modern UI: it is mounted on whistle's own web server through the `uiMiddleware` hook (at `/pm`), same origin as `/cgi-bin`, and plugins are still mounted the way whistle mounts them.
 
-### Proxy Settings
+The upstream classic UI is kept in full. Two ways to reach it:
 
-<img width="460" alt="Proxy Settings" src="https://github.com/user-attachments/assets/0ca0f123-96ff-41d7-8acf-7b3468d92605">
+- `Whistle` menu → untick `Modern UI`, and the whole window goes back to the classic interface
+- or stay in the modern UI and open `Workspace → Classic UI` in the sidebar, which embeds it in the current window
 
-1. `Proxy Port`: Required, proxy port, default is `8888`
+The look follows Claude Desktop: a flat sidebar, hairline dividers, the same palette. If Claude Desktop is installed the Anthropic Sans font is read from it; otherwise the stack falls back to the system face (no font file is copied into this repository).
 
-2. `Socks Port`: Add Socksv5 proxy port
+### Request list and inspector
 
-3. `Bound Host`: Specify the listening network card
+The request list is a Proxyman-style table (ID / URL / Client / Method / Status / Code / Time / Duration / Size). Click a header to sort; the context menu copies the URL, copies as cURL, replays the request; rows can be pinned and saved. URLs are split into host / path / query, with the path standing out.
 
-4. `Proxy Auth`: Set the username and password to authenticate the request through the proxy
+The inspector below is split in two: Request on the left, Response on the right. Response bodies can be read as JSON Text (highlighted source with line numbers), JSON View (collapsible tree with a key/value filter and a copy button), Raw, Hex or Preview.
 
-5. `Bypass List`: Whitelist domain name that is not proxied, supports the following three formats:
+<img width="900" alt="Main window and inspector" src="./docs/screenshots/main-inspector.png">
 
-   - IP: `127.0.0.1`
-   - Domain name: `www.test.com`
-   - Wildcard: `*.test.com` (this includes all sub-domains of `test.com`)
+### Rule badges
 
-6. `Use whistle's default storage directory`: The directory that stores whether to switch back to the command line version, so that the previous configuration data can be retained (after checking, the command line version must be stopped, otherwise the configuration may overwrite each other)
+When an enabled rule acts on a request, a badge appears at the end of the URL column; hovering it shows the rule line that matched:
 
-### Install plugins
+| Badge | Rule operators |
+| --- | --- |
+| Map Local | `file://` `xfile://` `tpl://` |
+| Blocked | `statusCode://` |
+| Throttled | `resSpeed://` `reqDelay://` and friends |
+| Proxy | `proxy://` `socks://` |
+| Host | `host://` |
+| Modified | `replace://` `resBody://` `resHeaders://` and friends |
+| Disabled | `disable://` |
 
-1. Click the Plugins tab in the left navigation bar
+<img width="900" alt="Rule badges" src="./docs/screenshots/rule-badges.png">
 
-2. Click the Install button at the top
+> Badges are worked out in the client by matching each URL against the enabled rule text, so they cover hand-written rules too, but they are an approximation of whistle's own matching. Complex rules (several operators, includes/excludes conditions) may be judged wrongly; the response itself is the source of truth.
 
-3. Enter the plugin name in the pop-up window (supports installing multiple plugins at the same time):
+### Stacked filters
 
-   - Multiple plugins are separated by spaces or line breaks
+`⌘F` opens the filter panel. Stack as many conditions as you like, each with a field (URL / Host / Path / Method / Status / Headers / Body / Type) and an operator (Contains / Not contains / Equals / Matches regex), combined with AND or OR. The checkbox on each row parks a condition without deleting it, and `Save` keeps the set for the next launch.
 
-   - Custom npm mirror sources can be specified:
+<img width="900" alt="Stacked filters" src="./docs/screenshots/filters.png">
 
-     - Directly add --registry=mirror address after the plugin name
+### Keyboard shortcuts
 
-     - Or select a mirror source that has been used in the past from the drop-down list
+Shortcuts belong to **the region being worked in**, not to the window. A dialog owns the keyboard while it is open; below that, it depends on whether the last click was in the request list or in the inspector.
+
+| Shortcut | Request list | Inspector | While a dialog is open |
+| --- | --- | --- | --- |
+| `⌘F` | opens the URL filter | searches the current pane | ignored |
+| `⌘A` | — | selects that pane only | stays inside the dialog |
+| `Esc` | closes the filter | closes the find bar | closes the dialog |
+| `↑` `↓` | moves the selected request | — | ignored |
+| `⇧⌘F` | sidebar search | sidebar search | — |
+| `⌘K` | clears the capture list | | |
+| `⌘R` | starts / pauses capturing | | |
+| `⌘\` | collapses / shows the sidebar | | |
+| `⌘,` | opens Proxy Settings | | |
+
+The inspector's own context menu (Copy, Select All, Copy this pane) is scoped to the pane under the cursor as well.
+
+### Dark mode and inspector docking
+
+The buttons at the top right dock the inspector at the bottom or on the right; clicking the active one collapses it. Both the docking side and the theme are remembered. The theme follows the system and can also be switched by hand.
+
+<img width="900" alt="Dark mode, inspector docked right" src="./docs/screenshots/dark-dock-right.png">
+
+### Tools
+
+`Tools` in the sidebar holds the rewriting tools. Everything they generate goes into a single whistle rule file called `Modern UI Tools`, one delimited block per tool, so hand-written rules outside those blocks are left alone.
+
+<img width="260" alt="Tools in the sidebar" src="./docs/screenshots/tools-entry.png">
+
+Every table starts with an `On` checkbox. Unticking a row does not delete it: the rule is commented out but kept in the file, so it is still there next time and can be switched back on.
+
+#### Map Local
+
+Serves a local file instead of the matched request. Takes full URLs, wildcards, `/regex/`, and Proxyman-style bare regex (`.*api/v1/users.*` is wrapped in slashes for you). The local file can be picked with the native file dialog.
+
+<img width="900" alt="Map Local" src="./docs/screenshots/map-local.png">
+
+#### Map Remote
+
+Forwards the matched request to another address — typically a production host pointed at a local server.
+
+#### Throttle
+
+Speed and delay. The presets follow Apple's Network Link Conditioner profiles (Wi-Fi / LTE / 3G / DSL / Edge / High Latency DNS / Very Bad Network / 100% Loss); choosing one fills the table below, which you can then edit. Apple states Kbps and whistle wants KB/s; the conversion is done for you.
+
+<img width="900" alt="Throttle presets" src="./docs/screenshots/throttle.png">
+
+> whistle has no packet-loss primitive, so a profile's loss rate is surfaced as a note, and `100% Loss` is approximated with a 502 response.
+
+#### Block List
+
+Returns a status code (403 by default) for matched requests.
+
+#### SSL Proxying
+
+Domains listed here are **not** decrypted; they stay as `CONNECT` tunnels. Useful for apps that pin certificates, or just to cut noise.
+
+#### Breakpoints
+
+Holds a request for a given number of milliseconds, built on whistle's `reqDelay://`.
+
+### Capturing HTTPS from a phone
+
+Capturing HTTPS from a phone or tablet needs three things: the device pointed at this machine as its proxy, whistle's root certificate installed **and trusted** on the device, and HTTPS decryption switched on in the client. All three live in one dialog.
+
+**Where**: `Tools → HTTPS Certificate` in the sidebar. The `Online` popover at the top right also links to it ("Set up HTTPS on another device →").
+
+<img width="900" alt="HTTPS certificate and mobile setup" src="./docs/screenshots/https-certificate.png">
+
+**Steps**
+
+1. **Turn on decryption**: tick `Decrypt HTTPS traffic` at the top of the dialog (whistle's `Capture HTTPS CONNECTs`). Without it, HTTPS only ever shows up as `CONNECT` tunnels with nothing inside.
+
+2. **Put the phone on the same Wi-Fi**, then point its proxy at the address in step 1 of the dialog (something like `192.168.1.23:8899`). With several network interfaces, use the dropdown to pick the one the phone can reach.
+   - iOS: `Settings → Wi-Fi → ⓘ next to the current network → Configure Proxy → Manual`, then copy the server and port from the dialog
+   - Android: long-press the current network → `Modify network → Advanced → Proxy → Manual`, same IP and port
+
+3. **Install the certificate**: scan the QR code on the right with the phone's camera, or open the URL from step 2 by hand.
+   - iOS: Safari says a profile was downloaded; install it under `Settings → General → VPN & Device Management`
+   - Android: after downloading, go to `Settings → Security → Encryption & credentials → Install a certificate → CA certificate` and pick the file
+
+4. **iOS needs one more step**: `Settings → General → About → Certificate Trust Settings`, and turn the switch on for whistle. Installed but not trusted means HTTPS still fails — this is the step people miss.
+
+5. **Check it**: open any https site on the phone. The client should list requests for that domain with `Code` 200 rather than `CONNECT`, and the decrypted body should be readable in Response.
+
+This machine's own certificate does not need any of that: use `Download root certificate` in the dialog, or `Whistle` menu → `Install Root CA` to install and trust it in one step.
+
+> The link in the QR code carries this session's access token (without it the phone is refused by the auth check), so only hand it to your own devices. The QR code is generated locally — see [`public/pm/js/qrcode.js`](./public/pm/js/qrcode.js) — with no third-party dependency.
+
+**If nothing shows up**
+
+- **Only `CONNECT` / tunnels, no individual requests**: `Decrypt HTTPS traffic` is off, or the domain is in the `SSL Proxying` exclusion list
+- **The phone says the certificate is not trusted**: on iOS, step 4 was skipped. On Android 9 and later, apps do not trust user-installed CAs unless they ship a `networkSecurityConfig` or you use a debug build; the system browser is unaffected
+- **The phone cannot reach the proxy**: use the LAN IP rather than a hostname (phones usually cannot resolve it), and check both devices are on the same subnet with the port open in the firewall
+- **Some apps show no traffic at all**: they almost certainly pin certificates. Use a test build, or let them through in `SSL Proxying`
+
+### Workspace
+
+`Workspace` at the bottom of the sidebar opens whistle's own areas:
+
+- **Rules**: add, edit and enable rule files. The editor is a plain text box with no syntax highlighting; complex rules are easier to edit in the Classic UI
+- **Values**: whistle's Values storage
+- **Plugins**: installed plugins, which can be enabled, disabled and opened
+- **Classic UI**: the upstream interface, embedded in the current window
+
+**Installing plugins** is done in the classic UI for now (`Workspace → Classic UI`, or untick `Modern UI` in the `Whistle` menu):
+
+1. Open the Plugins tab in the left-hand navigation
+2. Click Install at the top
+3. Type the plugin names, separated by spaces or newlines; `--registry=` picks an npm mirror
 
 <img width="1000" alt="install plugins" src="https://github.com/user-attachments/assets/53bfc7b1-81a8-4cdb-b874-c0f9ab58b65a" />
 
-**Example**:
+For example, installing two plugins from a mirror:
 
-``` txt
-w2 install whistle.script whistle.inspect
+```txt
+w2 install --registry=https://registry.npmmirror.com whistle.script whistle.inspect
 ```
 
-# FAQ
+### Proxy Settings
 
-#### 1. Enable the client to set the system proxy. Some applications (such as Outlook, Word, etc.) may have network connection exceptions
-Check whether there is the following `captureError` exception request in the packet capture interface:
+`Whistle` menu → `Proxy Settings`, or `⌘,`. The settings themselves are exactly upstream's; only the look was brought in line with the rest of the app.
 
-<img width="900" alt="image" src="https://github.com/avwo/whistle/assets/11450939/513ab963-a1a3-447a-ba84-147273451f78">
+<img width="470" alt="Proxy Settings" src="./docs/screenshots/proxy-settings.png">
 
-Configure the domain name with such exceptions to the `Bypass List` rule of `Proxy Settings`:
+1. `Proxy Port`: required, the proxy port, `8888` by default
+2. `Socks Port`: a Socks v5 port
+3. `Bound Host`: which interface to listen on
+4. `Proxy Auth`: a username and password for requests through the proxy
+5. `Bypass List`: what not to proxy, in three forms
+   - IP: `127.0.0.1`
+   - hostname: `www.test.com`
+   - wildcard: `*.test.com` (covers every subdomain of `test.com`)
+6. `Use whistle's default storage directory`: store data where the command-line whistle stores it, reusing that configuration. Stop the command-line whistle first, or the two will overwrite each other
 
-<img width="460" alt="Bypass List" src="https://github.com/user-attachments/assets/e0250e69-4fe5-4b6f-8638-6e64fdc306c7" />
+### Known limitations
 
-#### 2. How to update the client?
+- Breakpoints are a "hold" built on `reqDelay://`, not a real interactive breakpoint you can edit a request in
+- The rule editor is a plain text box with no whistle syntax highlighting
+- Plugins are installed from the classic UI
+- Rule badges are the client's local approximation, not whistle's own matching result
 
-- Check for new versions: Click the Whistle menu in the upper left corner → Check Update → Follow the prompts to complete the update
+> Apart from the installation images, every screenshot above was taken against a local demo server (`127.0.0.1:4399`) and contains no real traffic.
 
-- Manually download updates: Visit [GitHub Releases](https://github.com/cf-L/whistle-client/releases) to download the latest version and reinstall according to the above document
+## The Whistle menu
 
-#### 3. How do I capture HTTPS from a phone or tablet?
-See [HTTPS certificate and mobile devices](#https-certificate-and-mobile-devices): `Tools → HTTPS Certificate` carries the proxy address, the certificate QR code, and the iOS / Android trust steps.
+| Item | What it does |
+| --- | --- |
+| `Proxy Settings` | opens the settings window (`⌘,`) |
+| `Install Root CA` | installs and trusts the root certificate on this machine |
+| `Check Update` | checks for a new version |
+| `Set As System Proxy` | points the system proxy at the client (`⌘R`) |
+| `Start At Login` | launches the client at login |
+| `Modern UI` | switches between the modern and the classic interface |
+| `Hide To Tray` | closing the window hides it in the tray instead of quitting |
+| `Hide In Dock` | macOS: no Dock icon |
+| `Restart` / `Quit` | restarts / quits the client |
 
-#### 4. How to synchronize previous data?
-By default, the Whistle client uses an independent storage directory. If you want to continue using the directory of the command line version, you can switch back to the default directory of the command line through `Use whistle's default storage directory` in `Proxy Settings`:
+## FAQ
 
-<img width="470" alt="image" src="https://github.com/user-attachments/assets/ef6805d0-e05e-48bf-adbc-88677fd22b0c" />
+**1. After setting the system proxy, some applications (Outlook, Word, …) lose connectivity**
 
-> Note: Only a single Whistle instance should access this directory simultaneously. Running multiple instances concurrently will lead to configuration conflicts and data corruption!
+Those domains show up as `captureError` requests in the capture list. Add them to `Bypass List` in `Proxy Settings`.
 
-# Building and releasing
+**2. How do I update the client?**
 
-Installers are built by GitHub Actions on native runners (`.github/workflows/release.yml`): arm64 and x64 dmgs on macOS, an x64 nsis installer on Windows, and x64 / arm64 AppImages on Linux (they run on both Fedora and Ubuntu).
+- `Whistle` menu → `Check Update`, and follow the prompts
+- or download the latest build from [Releases](https://github.com/cf-L/whistle-client/releases) and install over the old one
+
+**3. How do I capture HTTPS from a phone or tablet?**
+
+See [Capturing HTTPS from a phone](#capturing-https-from-a-phone).
+
+**4. How do I keep the data from the command-line whistle?**
+
+The client uses its own storage directory by default. Tick `Use whistle's default storage directory` in `Proxy Settings` to point it back at the command-line default.
+
+> Make sure only one whistle instance uses that directory at a time; running two will overwrite each other's configuration.
+
+## Building and releasing
+
+Installers are built by GitHub Actions on their native runners (`.github/workflows/release.yml`): macOS produces arm64 and x64 dmgs, Windows an x64 nsis installer, Linux x64 and arm64 AppImages (which cover both Fedora and Ubuntu).
 
 To cut a release:
 
-1. Bump `version` in `package.json` and add a `CHANGELOG.md` entry
+1. Bump `version` in `package.json` and add a section to `CHANGELOG.md`
 2. Commit, then tag and push:
+
    ```bash
-   git tag v1.7.1 && git push origin v1.7.1
+   git tag v1.8.0 && git push origin v1.8.0
    ```
-3. The workflow uploads all three platforms into one **draft** release and fills its body with that version's `CHANGELOG.md` section (`scripts/release-notes.js`); publish it from GitHub once the artifacts look right
 
-The client's `Check Update` reads the version from this repo's `main` branch `package.json`, and Download opens `releases/download/v<version>/<installer for the current platform>` — so release assets have to keep the `Whistle-v<version>-<os>-<arch>.<ext>` naming that electron-builder's `artifactName` already produces.
+3. The workflow uploads all three platforms into the same **draft** release, with the body taken from that version's `CHANGELOG.md` section (`scripts/release-notes.js`). Publish it by hand once the artifacts look right
 
-Local builds (current platform only):
+The client's `Check Update` reads the `version` in `package.json` on this repository's `main` branch, and Download goes to `releases/download/v<version>/<installer for this platform>` — so the file names in a release have to stay in the `Whistle-v<version>-<platform>-<arch>.<ext>` shape (electron-builder's `artifactName` is already set up for it).
+
+Building locally (only for the current platform):
 
 ```bash
-npm run build:mac    # or build:win / build:linux
+npm run build:mac
 ```
 
-# Quick Start
+## License
 
-See the official guide for usage and examples: https://wproxy.org/docs/getting-started.html
-
-# License
-
-[MIT — see the LICENSE file](./LICENSE)
-
+[MIT (see the LICENSE file)](./LICENSE)
