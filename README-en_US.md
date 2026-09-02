@@ -225,22 +225,28 @@ This machine's own certificate does not need any of that: use `Download root cer
 
 ### Workspace
 
-`Workspace` at the bottom of the sidebar opens whistle's own areas:
+`Workspace` at the bottom of the sidebar opens whistle's own areas, all switched inside the same window:
 
+- **Network**: the request list, the page you start on
 - **Rules**: add, edit and enable rule files. The editor is a plain text box with no syntax highlighting; complex rules are easier to edit in the Classic UI
 - **Values**: whistle's Values storage
-- **Plugins**: installed plugins, which can be enabled, disabled and opened
+- **Plugins**: cards for the installed plugins, with a checkbox to enable each one and `Open UI` to open the plugin's own interface
 - **Classic UI**: the upstream interface, embedded in the current window
 
-**Installing plugins** is done in the classic UI for now (`Workspace → Classic UI`, or untick `Modern UI` in the `Whistle` menu):
+<img width="900" alt="Workspace and the Plugins page" src="./docs/screenshots/workspace.png">
 
-1. Open the Plugins tab in the left-hand navigation
-2. Click Install at the top
-3. Type the plugin names, separated by spaces or newlines; `--registry=` picks an npm mirror
+**Installing a plugin** happens in the classic interface — the modern Plugins page only enables plugins and opens them, it has no install entry:
 
-<img width="1000" alt="install plugins" src="https://github.com/user-attachments/assets/53bfc7b1-81a8-4cdb-b874-c0f9ab58b65a" />
+1. `Workspace → Classic UI` (or untick `Modern UI` in the `Whistle` menu to switch the whole window)
+2. Click `Install` in the top toolbar
+3. Type the plugin names, separated by spaces; the `--registry=` dropdown at the bottom right picks an npm mirror
+4. Click `Install`
 
-For example, installing two plugins from a mirror:
+<img width="900" alt="Installing a plugin in the classic interface" src="./docs/screenshots/classic-install.png">
+
+The install itself is carried out by the client (`lib/plugins.js` runs npminstall into the client's plugin directory), so a global `w2` is not needed.
+
+The command-line equivalent:
 
 ```txt
 w2 install --registry=https://registry.npmmirror.com whistle.script whistle.inspect

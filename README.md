@@ -227,22 +227,28 @@ Inspector 内右键还有 Copy、Select All、Copy this pane，作用范围同�
 
 ### Workspace
 
-侧边栏底部的 `Workspace` 展开后是 whistle 本身的几块：
+侧边栏底部的 `Workspace` 展开后是 whistle 本身的几块，都在同一个窗口内切换：
 
+- **Network**：抓包列表，也就是默认那一页
 - **Rules**：规则文件的增删改与启停。编辑器是纯文本框，没有语法高亮，复杂规则建议切到 Classic UI 编辑
 - **Values**：whistle 的 Values 存储
-- **Plugins**：已安装插件的列表，可以启停、打开插件自带的界面
-- **Classic UI**：在当前窗口内嵌打开上游的经典界面
+- **Plugins**：已安装插件的卡片列表，勾选框启停，`Open UI` 打开插件自带的界面
+- **Classic UI**：把上游的经典界面内嵌在当前窗口里
 
-**安装插件**目前要在经典界面里操作（`Workspace → Classic UI`，或 `Whistle` 菜单取消勾选 `Modern UI`）：
+<img width="900" alt="Workspace 与 Plugins 页" src="./docs/screenshots/workspace.png">
 
-1. 点左侧导航栏的 Plugins 标签页
-2. 点顶部的 Install 按钮
-3. 在弹窗里输入插件名，多个插件用空格或换行分隔，可以用 `--registry=` 指定 npm 镜像源
+**安装插件**要在经典界面里做——现代界面的 Plugins 页只负责启停和打开插件界面，没有安装入口：
 
-<img width="1000" alt="install plugins" src="https://github.com/user-attachments/assets/53bfc7b1-81a8-4cdb-b874-c0f9ab58b65a" />
+1. `Workspace → Classic UI`（或者 `Whistle` 菜单取消勾选 `Modern UI`，整窗切过去）
+2. 点顶部工具栏的 `Install`
+3. 弹窗里输入插件名，多个用空格分隔；右下角的 `--registry=` 下拉可以选 npm 镜像源
+4. 点 `Install`
 
-示例（安装两个插件并使用国内镜像源）：
+<img width="900" alt="在经典界面里安装插件" src="./docs/screenshots/classic-install.png">
+
+安装动作实际由客户端自己执行（`lib/plugins.js` 走 npminstall 装进客户端的插件目录），不依赖机器上有没有全局的 `w2`。
+
+等价的命令行写法：
 
 ```txt
 w2 install --registry=https://registry.npmmirror.com whistle.script whistle.inspect
