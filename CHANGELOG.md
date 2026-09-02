@@ -1,5 +1,15 @@
 > Get the latest release: https://github.com/cf-L/whistle-client/releases
 
+# v1.8.0
+1. feat: search inside a response with `Cmd+F`; the shortcut follows the region being worked in, so the request list gets the URL filter and a body pane gets its own find bar
+2. feat: badge the requests an enabled rule acts on (Map Local, Blocked, Throttled, Proxy, Host, Modified) in the request list
+3. feat: switch a tool rule off without deleting it - Map Local, Map Remote, Throttle, Block List, SSL Proxying and Breakpoints rows gain an `On` checkbox and are remembered when unticked
+4. feat: split the URL into host / path / query in both the list and the inspector, so the endpoint stands out
+5. feat: scope `Select All` and the inspector's context menu to the pane being read instead of the whole window
+6. fix: route Escape, `Cmd+F`, `Cmd+A` and the arrow keys by region - a dialog no longer lets the URL filter behind it answer
+7. fix: decide the Dock icon at runtime instead of in Info.plist, so `Hide In Dock` owns the decision
+8. style: flatten the sidebar into the window and draw every splitter as a hairline
+
 # v1.7.0
 1. feat: add a Proxyman-style modern UI, served through whistle's `uiMiddleware` (the classic UI stays available under `Whistle` menu → `Modern UI`)
 2. feat: stacked ⌘F filters with AND/OR, JSON Text / JSON View / Preview response viewers, dockable inspector, dark mode
