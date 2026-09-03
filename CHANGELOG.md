@@ -1,5 +1,11 @@
 > Get the latest release: https://github.com/cf-L/whistle-client/releases
 
+# v1.9.0
+1. feat: add `Tools -> Android over USB` - forwards a port on the phone back to whistle with adb, copies the root certificate to the device and points its proxy at the forward, for phones that cannot reach this machine over Wi-Fi at all
+2. feat: report what a phone refused rather than failing silently - Xiaomi withholds the global proxy without `USB debugging (Security settings)`, and a proxy typed into the Wi-Fi editor is read back and labelled as such
+3. fix: detect a failed `adb shell` command from its output; a denied settings write prints a stack trace and still exits 0
+4. docs: fold the modern and classic instructions into one README, retake the screenshots against the current build, and write down how Android over USB differs per ROM
+
 # v1.8.0
 1. feat: search inside a response with `Cmd+F`; the shortcut follows the region being worked in, so the request list gets the URL filter and a body pane gets its own find bar
 2. feat: badge the requests an enabled rule acts on (Map Local, Blocked, Throttled, Proxy, Host, Modified) in the request list
