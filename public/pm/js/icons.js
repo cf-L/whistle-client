@@ -31,6 +31,7 @@ export const icons = {
   cert: svg('<circle cx="12" cy="9.5" r="5"/><path d="M9.6 13.6L8.5 20l3.5-1.8L15.5 20l-1.1-6.4"/><path d="M10.2 9.4l1.3 1.4 2.4-2.6"/>'),
   ssl: svg('<rect x="5" y="10.5" width="14" height="9" rx="2.2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/>'),
   breakpoint: svg('<circle cx="12" cy="12" r="8"/><rect x="9.5" y="9" width="2" height="6" rx=".8" fill="currentColor" stroke="none"/><rect x="12.5" y="9" width="2" height="6" rx=".8" fill="currentColor" stroke="none"/>'),
+  android: svg('<rect x="5" y="9" width="14" height="9" rx="2.2"/><path d="M8 9a4 4 0 0 1 8 0"/><path d="M8.5 5.5L9.8 7.4"/><path d="M15.5 5.5L14.2 7.4"/><path d="M9.5 18v2"/><path d="M14.5 18v2"/>'),
   sidebar: svg('<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M9.5 4.5v15"/>'),
   pin: svg('<path d="M9 4h6l-.8 5.2 3.3 3.3H6.5l3.3-3.3z"/><path d="M12 12.5V20"/>'),
   save: svg('<path d="M5.5 5.5A1.5 1.5 0 0 1 7 4h8.5L19 7.5V18a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 18z"/><path d="M8.5 4v5h6V4"/><rect x="8.5" y="13" width="7" height="6.5"/>'),

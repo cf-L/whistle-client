@@ -608,8 +608,132 @@ const certificate = async () => {
     + 'below carries this session\'s access token, so only hand it to your own devices.');
 };
 
+// Wi-Fi is not always an option: a corporate access point with client isolation
+// will not let a phone reach this machine at all. Over USB, adb forwards a port
+// on the phone back to whistle here, so the phone proxies to its own localhost
+// and never touches the network. The shell owns the adb calls.
+const androidUsb = async () => {
+  const call = async (action, serial) => {
+    try {
+      // eslint-disable-next-line global-require
+      const { ipcRenderer } = require('electron');
+      return await ipcRenderer.invoke('android-usb', { action, serial });
+    } catch (e) {
+      return { error: 'Only available in the desktop app' };
+    }
+  };
+
+  let state = {};
+  const rows = el('div', { class: 'usb-status' });
+  const actions = el('div', { class: 'cert-row' });
+  const picker = el('select', { class: 'filter-select' });
+
+  const line = (label, value, ok) => el('div', { class: 'usb-line' }, [
+    el('span', { class: 'usb-dot' + (ok === undefined ? '' : (ok ? ' on' : ' off')) }),
+    el('span', { class: 'usb-label', text: label }),
+    el('code', { class: 'usb-value', text: value }),
+  ]);
+
+  const render = () => {
+    const list = state.devices || [];
+    const ready = list.filter((d) => d.state === 'device');
+    const on = !!(state.reverse && state.proxy);
+
+    picker.textContent = '';
+    list.forEach((d) => picker.appendChild(el('option', {
+      value: d.serial,
+      text: `${d.model || d.serial}${d.state === 'device' ? '' : ` (${d.state})`}`,
+      selected: d.serial === state.serial ? 'selected' : null,
+    })));
+
+    rows.textContent = '';
+    if (state.error) {
+      rows.appendChild(el('div', { class: 'hint', text: state.error }));
+    }
+    if (state.proxyError) {
+      rows.appendChild(el('div', { class: 'usb-warn' }, [
+        el('div', { text: state.proxyError }),
+        state.manualProxy ? el('code', { class: 'usb-value', text: state.manualProxy }) : null,
+      ]));
+    }
+    if (state.stale) {
+      rows.appendChild(el('div', { class: 'usb-warn' }, el('div', {
+        text: 'The device still points at this proxy but nothing is forwarding it, '
+          + 'so it has no working network. Plug it back in and turn this on again, or turn it off.',
+      })));
+    }
+    rows.appendChild(line('Device', ready.length
+      ? `${(ready.find((d) => d.serial === state.serial) || ready[0]).model || state.serial}`
+      : 'none connected', !!ready.length));
+    rows.appendChild(line('Port forward', state.reverse
+      ? `tcp:${state.port} → whistle` : 'off', !!state.reverse));
+    rows.appendChild(line('Proxy on device',
+      state.proxy ? `${state.proxy}${state.proxySource === 'Wi-Fi' ? '  (set on the Wi-Fi network)' : ''}` : 'off',
+      !!state.proxy));
+    rows.appendChild(line('Certificate', state.certPath || '', undefined));
+
+    actions.textContent = '';
+    actions.appendChild(el('button', {
+      class: 'btn primary',
+      text: on ? 'Re-apply' : 'Turn on',
+      onclick: () => step('enable'),
+    }));
+    actions.appendChild(el('button', {
+      class: 'btn',
+      text: 'Turn off',
+      onclick: () => step('disable'),
+    }));
+    actions.appendChild(el('button', {
+      class: 'link-btn',
+      text: 'Open certificate settings on device',
+      onclick: () => step('openCertSettings'),
+    }));
+    actions.appendChild(el('button', { class: 'link-btn', text: 'Refresh', onclick: () => step('status') }));
+  };
+
+  const step = async (action) => {
+    const res = await call(action, picker.value || state.serial);
+    if (res.error) {
+      toast(res.error);
+    } else if (action === 'enable') {
+      toast('USB capture on — turn it off before unplugging the phone');
+    } else if (action === 'disable') {
+      toast('USB capture off');
+    }
+    const previous = state;
+    state = res.state || state;
+    // A plain refresh must not silently drop a warning the last action raised.
+    if (action === 'status' && !state.proxyError && previous.proxyError && !state.proxy) {
+      state.proxyError = previous.proxyError;
+      state.manualProxy = previous.manualProxy;
+    }
+    render();
+  };
+
+  picker.addEventListener('change', () => step('status'));
+  await step('status');
+
+  openModal('Android over USB', el('div', { class: 'cert-pane' }, [
+    rows,
+    (state.devices || []).length > 1 ? el('div', { class: 'cert-row' }, [
+      el('span', { class: 'field-label inline', text: 'Device' }), picker,
+    ]) : null,
+    actions,
+    el('div', { class: 'field-label', text: 'After turning it on' }),
+    el('div', { class: 'hint' }, [
+      el('div', { text: 'The root certificate is copied to the device\'s Download folder. Install it there: Settings → Security → Encryption & credentials → Install a certificate → CA certificate.' }),
+      el('div', { text: 'Android 9 and later: apps ignore user-installed CAs unless they ship a networkSecurityConfig or you use a debug build. The system browser is unaffected.' }),
+      el('div', { text: 'Turn it off before unplugging. The proxy setting stays on the phone while the forward dies with the cable, which leaves the phone without a network until one or the other is put back.' }),
+      el('div', { text: 'While this is on, the forward is restored automatically a few seconds after the phone is plugged back in, and the setting is cleared if the app quits.' }),
+    ]),
+  ]), null,
+  'Needs USB debugging on the phone and adb on this machine. Turning it off clears '
+    + 'both the port forward and the proxy setting on the device.');
+};
+
 const TOOLS = {
   cert: certificate,
+  android: androidUsb,
   'map-local': mapLocal,
   'map-remote': mapRemote,
   throttle,

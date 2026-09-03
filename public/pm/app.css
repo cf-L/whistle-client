@@ -1106,3 +1106,22 @@ mark.find-hit-current {
 
 /* A right-docked inspector leaves little room, so secondary columns drop out. */
 body.dock-right :is(.cell-client, .cell-time, .cell-duration, .cell-size) { display: none; }
+
+/* Android over USB */
+.usb-status { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.usb-line { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+.usb-dot {
+  flex: 0 0 7px; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--border); 
+}
+.usb-dot.on { background: var(--ok); }
+.usb-dot.off { background: var(--fg-faint); }
+.usb-label { flex: 0 0 132px; color: var(--fg-dim); }
+.usb-value { font-family: var(--mono); font-size: 12px; color: var(--fg); }
+.usb-warn {
+  margin: 4px 0 2px; padding: 8px 10px;
+  border: 1px solid rgba(185, 59, 40, .25); border-radius: var(--radius);
+  background: rgba(185, 59, 40, .07); color: var(--fg-dim);
+  font-size: 12px; line-height: 1.5;
+}
+.usb-warn .usb-value { display: inline-block; margin-top: 4px; }
