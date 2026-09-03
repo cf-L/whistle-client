@@ -188,11 +188,48 @@ Domains listed here are **not** decrypted; they stay as `CONNECT` tunnels. Usefu
 
 Holds a request for a given number of milliseconds, built on whistle's `reqDelay://`.
 
+#### Android over USB
+
+A corporate Wi-Fi often puts phones and laptops on different subnets, or isolates clients from each other, so the phone cannot reach this machine's LAN address at all. USB gets round it: `adb reverse` forwards a port on the phone back to whistle here, and the phone proxies to its own `127.0.0.1`, never touching the network.
+
+Needs **USB debugging** on the phone and **adb** on this machine (looked up under `ANDROID_HOME`, `~/Library/Android/sdk`, Homebrew and the other usual places).
+
+<img width="760" alt="Android over USB" src="./docs/screenshots/android-usb.png">
+
+`Turn on` does three things: sets up `adb reverse`, copies the running instance's root certificate to `/sdcard/Download/whistle-rootca.crt`, and points the phone's global proxy at `127.0.0.1:<port>`. `Turn off` undoes the last two.
+
+**The certificate still has to be installed by hand** — Android does not let anything install it for you. Use `Open certificate settings on device`, then `Settings → Security → Encryption & credentials → Install a certificate → CA certificate` and pick the file from Download.
+
+**How ROMs differ**
+
+| | Stock / vivo and friends | Xiaomi (MIUI / HyperOS) |
+| --- | --- | --- |
+| Global proxy | adb sets it | refused; needs a second switch (below) |
+| Proxy setup | automatic | by hand, or automatic once that switch is on |
+
+Xiaomi splits "USB debugging" and "**USB debugging (Security settings)**". With only the first one on, adb has no `WRITE_SECURE_SETTINGS` and the global proxy write is refused:
+
+```
+java.lang.SecurityException: Permission denial,
+must have one of: [android.permission.WRITE_SECURE_SETTINGS]
+```
+
+The dialog says so and offers the address to type. Two ways out:
+
+- turn on **USB debugging (Security settings)** in Developer options (needs a Xiaomi account), after which `Turn on` is fully automatic
+- or set it by hand: `Settings → Wi-Fi → current network → Proxy → Manual`, hostname `127.0.0.1` and the port from the dialog
+
+A hand-typed proxy lives on the **Wi-Fi network** rather than in the global setting; these are two separate stores. The dialog labels which one it found (`(set on the Wi-Fi network)`) — adb cannot change that one, so `Turn off` only removes the port forward and the proxy has to be cleared from the Wi-Fi editor. Per-network proxies are also dropped by the system when the network reconnects, so retype it if it disappears.
+
+**Turn it off before unplugging.** The proxy setting stays on the phone while the forward dies with the cable, which leaves the phone with no working network at all. While the tool is on, the forward is restored within seconds of plugging back in, and the setting is cleared on a best-effort basis when the client quits — but the gap between unplugging and plugging back in cannot be avoided.
+
 ### Capturing HTTPS from a phone
 
 Capturing HTTPS from a phone or tablet needs three things: the device pointed at this machine as its proxy, whistle's root certificate installed **and trusted** on the device, and HTTPS decryption switched on in the client. All three live in one dialog.
 
 **Where**: `Tools → HTTPS Certificate` in the sidebar. The `Online` popover at the top right also links to it ("Set up HTTPS on another device →").
+
+> When the phone cannot reach this machine's LAN address at all (different subnets, client isolation), use [Android over USB](#android-over-usb) instead.
 
 <img width="900" alt="HTTPS certificate and mobile setup" src="./docs/screenshots/https-certificate.png">
 
@@ -274,6 +311,7 @@ w2 install --registry=https://registry.npmmirror.com whistle.script whistle.insp
 - The rule editor is a plain text box with no whistle syntax highlighting
 - Plugins are installed from the classic UI
 - Rule badges are the client's local approximation, not whistle's own matching result
+- Android over USB automates the forward, the certificate copy and the proxy only; installing the certificate is manual by system design, and Xiaomi needs an extra security switch before the proxy can be set at all
 
 > Apart from the installation images, every screenshot above was taken against a local demo server (`127.0.0.1:4399`) and contains no real traffic.
 

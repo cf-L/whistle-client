@@ -190,11 +190,48 @@ Inspector 内右键还有 Copy、Select All、Copy this pane，作用范围同�
 
 基于 whistle 的 `reqDelay://` 把请求挂起指定毫秒数。
 
+#### Android over USB
+
+企业 Wi-Fi 常把手机和电脑放在不同网段，或者开了客户端隔离，手机根本连不到电脑的局域网地址 —— 这时候走 USB：`adb reverse` 把手机上的一个端口转发回本机的 whistle，手机代理指向它自己的 `127.0.0.1`，完全不经过 Wi-Fi。
+
+需要手机开 **USB 调试**、本机有 **adb**（按 `ANDROID_HOME`、`~/Library/Android/sdk`、Homebrew 等常见位置自动查找）。
+
+<img width="760" alt="Android over USB" src="./docs/screenshots/android-usb.png">
+
+`Turn on` 一次做三件事：建立 `adb reverse`、把当前实例的根证书推到手机的 `/sdcard/Download/whistle-rootca.crt`、把手机的全局代理指向 `127.0.0.1:<端口>`。`Turn off` 撤掉后两样。
+
+**证书仍需手动安装**（系统不允许代为安装）：点 `Open certificate settings on device`，然后 `设置 → 安全 → 加密与凭据 → 从存储设备安装 → CA 证书`，选 Download 里那个文件。
+
+**各家 ROM 的差异**
+
+| | 原生 / vivo 等 | 小米（MIUI / HyperOS） |
+| --- | --- | --- |
+| 全局代理 | adb 直接设 | 拒绝，需另开一个开关（见下） |
+| 代理配置 | 自动 | 手动填 Wi-Fi 代理，或开安全设置开关后自动 |
+
+小米把「USB 调试」和「**USB 调试（安全设置）**」拆成两个开关，只开前者时 adb 没有 `WRITE_SECURE_SETTINGS`，写全局代理会被拒：
+
+```
+java.lang.SecurityException: Permission denial,
+must have one of: [android.permission.WRITE_SECURE_SETTINGS]
+```
+
+这时弹窗会明说原因，并给出手填地址。两条出路：
+
+- 开发者选项里打开 **USB 调试（安全设置）**（需登录小米账号），之后 `Turn on` 全自动
+- 或者手动填：`设置 → WLAN → 当前网络 → 代理 → 手动`，主机名 `127.0.0.1`、端口填弹窗里给的那个
+
+手填的是 **Wi-Fi 每网络代理**，和全局代理是两套存储。弹窗会把来源标出来（`(set on the Wi-Fi network)`）—— 这条 adb 改不了，所以 `Turn off` 只能撤掉端口转发，代理要自己去 Wi-Fi 里清。这类代理在网络重连、切换 Wi-Fi 后容易被系统清掉，掉了重填即可。
+
+**拔线前先点 Turn off。** 代理设置留在手机上，而端口转发随 USB 断开消失，手机会因为代理指向一个没人监听的本地端口而完全断网。开着这个功能时，插回线几秒内转发会自动恢复，退出客户端时也会尽力清掉手机上的代理，但拔线到插回这段时间的断网无法避免。
+
 ### 移动端抓 HTTPS
 
 手机、平板抓 HTTPS 需要三件事：设备的代理指向本机、设备装上 whistle 的根证书并**信任**、客户端里打开 HTTPS 解密。这三步都收在一个弹窗里。
 
 **入口**：侧边栏 `Tools → HTTPS Certificate`。右上角 `Online` 弹窗里也有一条「Set up HTTPS on another device →」。
+
+> 手机连不上电脑的局域网地址（不同网段、客户端隔离）时，安卓改走 [Android over USB](#android-over-usb)。
 
 <img width="900" alt="HTTPS 证书与移动端引导" src="./docs/screenshots/https-certificate.png">
 
@@ -276,6 +313,7 @@ w2 install --registry=https://registry.npmmirror.com whistle.script whistle.insp
 - 规则编辑器是纯文本框，没有 whistle 规则语法高亮
 - 插件的安装要回到经典界面
 - 规则命中标识是客户端的本地近似匹配，不是 whistle 的匹配结果
+- Android over USB 只能自动到「推证书 + 设代理」为止，证书安装是系统强制手动；小米还要额外开一个安全设置开关才允许改代理
 
 > 上面除安装截图外的所有截图，请求都来自一个本地示例服务（`127.0.0.1:4399`），不含任何真实流量。
 
