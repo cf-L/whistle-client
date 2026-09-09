@@ -6,10 +6,10 @@ import * as api from './api.js';
 import { toast } from './ui.js';
 import { icon } from './icons.js';
 
-const REQ_TABS = ['Header', 'Query', 'Body', 'Raw', 'Summary'];
+const REQ_TABS = ['Header', 'Query', 'Params', 'Body', 'Raw', 'Summary'];
 const RES_TABS = ['Header', 'JSON Text', 'JSON View', 'Raw', 'Hex', 'Preview', 'Timeline', 'Rules', 'Frames'];
 const sideTab = { request: 'Header', response: 'Header' };
-const bodyView = { request: 'pretty', response: 'pretty' };
+const bodyView = { request: 'params', response: 'pretty' };
 let layout = 'split';
 let scrollContext = '';
 let lastRenderedItem;
@@ -135,18 +135,171 @@ const jsonTextView = (text) => {
   return view;
 };
 
+// ---------------------------------------------------------------------------
+// Request parameters
+//
+// A POST carries its parameters in the body, where a raw dump is close to
+// unreadable: percent-escaped pairs on one line, or a multipart blob with the
+// fields buried between boundaries. Decode the three shapes whistle actually
+// sees — urlencoded, multipart, JSON — so the parameters can be read as a list.
+
+const contentTypeOf = (side) => String((side && side.headers && side.headers['content-type']) || '');
+
+const byteLength = (text) => new TextEncoder().encode(text || '').length;
+
+const parseFormFields = (text) => Array.from(new URLSearchParams(text).entries())
+  .map(([name, value]) => ({ name, value }));
+
+// The body is text by the time it gets here, so a file part's bytes are already
+// mangled; keep its name, type and size and leave the payload out.
+const parseMultipartFields = (text, boundary) => {
+  const fields = [];
+  text.split(`--${boundary}`).slice(1).forEach((chunk) => {
+    if (!chunk || chunk.startsWith('--')) {
+      return;
+    }
+    const part = chunk.replace(/^\r?\n/, '');
+    const split = part.search(/\r?\n\r?\n/);
+    if (split < 0) {
+      return;
+    }
+    const head = part.slice(0, split);
+    const value = part.slice(split).replace(/^\r?\n\r?\n/, '').replace(/\r?\n$/, '');
+    const name = /name="([^"]*)"/i.exec(head);
+    const filename = /filename="([^"]*)"/i.exec(head);
+    const type = /content-type:\s*([^\r\n]+)/i.exec(head);
+    fields.push({
+      name: name ? name[1] : '(unnamed)',
+      value,
+      filename: filename ? filename[1] : null,
+      type: type ? type[1].trim() : null,
+    });
+  });
+  return fields;
+};
+
+const bodyParams = (side, raw) => {
+  if (!raw) {
+    return null;
+  }
+  // The boundary is case-sensitive, so match on a lowered copy and read the
+  // boundary itself out of the header as it was sent.
+  const rawType = contentTypeOf(side);
+  const type = rawType.toLowerCase();
+  if (type.includes('x-www-form-urlencoded')) {
+    const fields = parseFormFields(raw);
+    return fields.length ? { kind: 'form', fields } : null;
+  }
+  const boundary = /boundary=(?:"([^"]+)"|([^;]+))/i.exec(rawType);
+  if (type.includes('multipart/') && boundary) {
+    const fields = parseMultipartFields(raw, (boundary[1] || boundary[2]).trim());
+    return fields.length ? { kind: 'multipart', fields } : null;
+  }
+  if (type.includes('json') || /^\s*[[{]/.test(raw)) {
+    try {
+      return { kind: 'json', value: JSON.parse(raw) };
+    } catch (e) {
+      return null;
+    }
+  }
+  return null;
+};
+
+// A field can carry a whole JSON document as its value — very common in mobile
+// APIs, where one `list=` parameter holds the actual payload. Parse it so the
+// value opens as a tree instead of one long escaped line.
+const nestedJson = (value) => {
+  if (!value || !/^\s*[[{]/.test(value)) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(value);
+    return (parsed && typeof parsed === 'object') ? parsed : null;
+  } catch (e) {
+    return null;
+  }
+};
+
+const paramsBlock = (item, which, params) => {
+  if (params.kind === 'json') {
+    return jsonTreePanel(params.value, treeStateFor(item, which, 'params'));
+  }
+  const { fields } = params;
+  const rows = el('div', { class: 'kv' });
+  fields.forEach((field) => {
+    const meta = [
+      field.filename ? `file: ${field.filename}` : null,
+      field.type,
+      field.filename ? formatSize(byteLength(field.value)) : null,
+    ].filter(Boolean).join('  ·  ');
+    const nested = field.filename ? null : nestedJson(field.value);
+    const row = el('div', { class: 'kv-row param-row' }, [
+      el('div', { class: 'kv-key', text: field.name }),
+      el('div', { class: 'kv-val' }, [
+        nested
+          ? el('div', { class: 'param-json json-tree' }, jsonTree(
+            nested,
+            undefined,
+            '$',
+            treeStateFor(item, which, `params:${field.name}`),
+          ))
+          : null,
+        (nested || field.filename) ? null : el('div', { class: 'param-value', text: field.value }),
+        meta ? el('div', { class: 'param-meta', text: meta }) : null,
+      ]),
+    ]);
+    row.dataset.text = `${field.name} ${field.filename || field.value}`.toLowerCase();
+    rows.appendChild(row);
+  });
+  const asText = () => fields
+    .map((f) => `${f.name}=${f.filename ? `<file ${f.filename}>` : f.value}`).join('\n');
+  const search = el('input', {
+    class: 'viewer-search',
+    type: 'search',
+    placeholder: 'Filter parameters',
+    spellcheck: 'false',
+    oninput: (e) => {
+      const query = e.target.value.trim().toLowerCase();
+      rows.querySelectorAll('.param-row').forEach((row) => {
+        row.classList.toggle('filtered-out', !!query && !(row.dataset.text || '').includes(query));
+      });
+    },
+  });
+  return el('div', { class: 'params-panel' }, [
+    el('div', { class: 'viewer-tools' }, [
+      el('span', {
+        class: 'viewer-note',
+        text: `${fields.length} ${fields.length === 1 ? 'field' : 'fields'} · ${params.kind === 'form' ? 'urlencoded' : 'multipart'}`,
+      }),
+      el('button', {
+        class: 'viewer-tool',
+        text: 'Copy',
+        onclick: async () => {
+          const ok = await copyText(asText());
+          toast(ok ? 'Parameters copied' : 'Could not copy');
+        },
+      }),
+      search,
+    ]),
+    rows,
+  ]);
+};
+
 const bodyBlock = (item, which, showModeBar = true) => {
   const side = which === 'request' ? item.req : item.res;
   const full = fullBodies.get(item.id) || {};
   const sideFull = which === 'request' ? full.req : full.res;
   const base64 = (sideFull && sideFull.base64) || (side && side.base64);
   const raw = decodeBody((sideFull && sideFull.body) || (side && side.body), base64);
-  const mode = bodyView[which];
+  const params = which === 'request' ? bodyParams(side, raw) : null;
+  // Parameters are the default reading of a request body, but a body that has
+  // none (or is not text) falls back to the plain view instead of an empty tab.
+  const mode = (bodyView[which] === 'params' && !params) ? 'pretty' : bodyView[which];
   const wrap = el('div', { class: 'body-block' });
 
   const modes = which === 'response'
     ? [['pretty', 'JSON Text'], ['tree', 'JSON View'], ['raw', 'Raw'], ['hex', 'Hex'], ['preview', 'Preview']]
-    : [['pretty', 'Pretty'], ['raw', 'Raw'], ['hex', 'Hex']];
+    : [...(params ? [['params', 'Params']] : []), ['pretty', 'Pretty'], ['raw', 'Raw'], ['hex', 'Hex']];
   const bar = el('div', { class: 'seg' }, modes.map(([m, label]) => el('button', {
     class: `seg-btn${mode === m ? ' active' : ''}`,
     text: label,
@@ -164,6 +317,10 @@ const bodyBlock = (item, which, showModeBar = true) => {
     return wrap;
   }
 
+  if (mode === 'params') {
+    wrap.appendChild(paramsBlock(item, which, params));
+    return wrap;
+  }
   if (mode === 'hex') {
     wrap.appendChild(el('pre', { class: 'code mono', text: toHex(base64) || 'Binary payload unavailable' }));
     return wrap;
@@ -639,6 +796,20 @@ const sidePane = (item, which) => {
       content = query
         ? kv(Array.from(new URLSearchParams(query).entries()))
         : el('div', { class: 'placeholder', text: 'No query parameters' });
+      break;
+    }
+    case 'Params': {
+      const full = fullBodies.get(item.id) || {};
+      const sideFull = full.req;
+      const base64 = (sideFull && sideFull.base64) || (side && side.base64);
+      const raw = decodeBody((sideFull && sideFull.body) || (side && side.body), base64);
+      const params = bodyParams(side, raw);
+      content = params
+        ? paramsBlock(item, which, params)
+        : el('div', {
+          class: 'placeholder',
+          text: raw ? 'Body is not a parameter payload — see Body or Raw' : 'No body parameters',
+        });
       break;
     }
     case 'Body':
