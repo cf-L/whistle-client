@@ -20,7 +20,22 @@ export const isOpen = () => !!node;
 
 document.addEventListener('click', close);
 
-export const toCurl = (item) => {
+const quote = (value) => String(value).replace(/'/g, "'\\''");
+
+// The session list carries a request body only when it is small, and a captured
+// body can arrive base64-encoded. Ask for the full session before building the
+// command, or a POST is copied as a request with no parameters at all.
+const requestBodyOf = async (item) => {
+  let request = item.req || {};
+  try {
+    const result = await api.getSession([item.id], []);
+    const session = result && (result[item.id] || (result.data && result.data[item.id]));
+    request = (session && session.req) || request;
+  } catch (e) { /* use the body already present in the session list */ }
+  return decodeBody(request.body, request.base64);
+};
+
+export const toCurl = async (item) => {
   const headers = (item.req && item.req.headers) || {};
   const names = (item.req && item.req.rawHeaderNames) || {};
   const parts = [`curl -X ${(item.req && item.req.method) || 'GET'} '${item.url}'`];
@@ -29,10 +44,11 @@ export const toCurl = (item) => {
       return;
     }
     const value = Array.isArray(headers[k]) ? headers[k].join(', ') : headers[k];
-    parts.push(`  -H '${names[k] || k}: ${String(value).replace(/'/g, "'\\''")}'`);
+    parts.push(`  -H '${names[k] || k}: ${quote(value)}'`);
   });
-  if (item.req && item.req.body) {
-    parts.push(`  --data-raw '${String(item.req.body).replace(/'/g, "'\\''")}'`);
+  const body = await requestBodyOf(item);
+  if (body) {
+    parts.push(`  --data-raw '${quote(body)}'`);
   }
   return parts.join(' \\\n');
 };
@@ -99,7 +115,7 @@ export const open = (event, item) => {
   const url = parseUrl(item.url);
   const actions = [
     ['Copy URL', () => copy(item.url)],
-    ['Copy as cURL', () => copy(toCurl(item))],
+    ['Copy as cURL', async () => copy(await toCurl(item))],
     ['Copy Response Body', () => copyResponseBody(item)],
     ['-'],
     [store.state.pinned.has(item.id) ? 'Unpin' : 'Pin', () => store.togglePin(item.id)],
