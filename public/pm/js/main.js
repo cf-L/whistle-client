@@ -120,11 +120,36 @@ const bindSidebarResize = () => {
   });
 };
 
+const THEME_CHOICE_KEY = 'pm-theme-choice';
+const systemDarkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+const getSystemTheme = () => (systemDarkQuery.matches ? 'dark' : 'light');
+
 const applyTheme = (theme) => {
   document.documentElement.dataset.theme = theme;
+};
+
+const chooseTheme = (theme) => {
+  applyTheme(theme);
   try {
-    localStorage.setItem('pm-theme', theme);
+    localStorage.setItem(THEME_CHOICE_KEY, theme);
   } catch (e) { /* private mode */ }
+};
+
+const followSystemTheme = () => {
+  try {
+    localStorage.removeItem(THEME_CHOICE_KEY);
+  } catch (e) { /* private mode */ }
+  applyTheme(getSystemTheme());
+};
+
+const initTheme = () => {
+  let choice = null;
+  try {
+    choice = localStorage.getItem(THEME_CHOICE_KEY);
+  } catch (e) { /* private mode */ }
+  applyTheme(choice || getSystemTheme());
+  systemDarkQuery.addEventListener('change', followSystemTheme);
 };
 
 const showPage = (page) => {
@@ -213,7 +238,7 @@ const bindToolbar = () => {
   $('#btn-sidebar-show').addEventListener('click', toggleSidebar);
   $('#btn-theme').addEventListener('click', () => {
     const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-    applyTheme(next);
+    chooseTheme(next);
   });
 
   $$('#tool-nav a').forEach((a) => a.addEventListener('click', () => tools.open(a.dataset.tool)));
@@ -450,11 +475,7 @@ const boot = () => {
   paintIcons();
   filters.init();
   initTooltips();
-  try {
-    applyTheme(localStorage.getItem('pm-theme') || 'light');
-  } catch (e) {
-    applyTheme('light');
-  }
+  initTheme();
   list.init();
   // Rule text is small and rarely changes, so a slow refresh is enough to keep
   // the list badges honest.

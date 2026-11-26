@@ -1,5 +1,8 @@
 > Get the latest release: https://github.com/cf-L/whistle-client/releases
 
+# Unreleased
+1. fix: follow the system light/dark appearance in the modern UI (a manual toggle holds until the system appearance next changes), and stop an appearance change from showing and focusing the window
+
 # v1.9.0
 1. feat: add `Tools -> Android over USB` - forwards a port on the phone back to whistle with adb, copies the root certificate to the device and points its proxy at the forward, for phones that cannot reach this machine over Wi-Fi at all
 2. feat: report what a phone refused rather than failing silently - Xiaomi withholds the global proxy without `USB debugging (Security settings)`, and a proxy typed into the Wi-Fi editor is read back and labelled as such
